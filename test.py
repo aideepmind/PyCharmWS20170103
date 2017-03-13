@@ -11,7 +11,10 @@
 # print(sum1)
 # print(Sequential.constraints)
 
-# learning pandas
+
+
+
+# learning pandas & matplotlib
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -328,6 +331,40 @@ import matplotlib.pyplot as plt
 # print(df.groupby('grade').size())
 
 # 绘图
-ts = pd.Series(np.random.randn(1000), index = pd.date_range('1/1/2000', periods = 1000))
-ts = ts.cumsum()
-ts.plot()
+# ts = pd.Series(np.random.randn(1000), index = pd.date_range('1/1/2000', periods = 1000))
+# ts = ts.cumsum()
+# ts.plot()
+
+# 在数据桢中,可以很方便的绘制带标签列
+# df = pd.DataFrame(np.random.randn(1000, 4), index = pd.date_range('1/1/2000', periods = 1000), columns = ['A', 'B', 'C', 'D'])
+# df = df.cumsum()
+# plt.figure(); df.plot(); plt.legend(loc = 'best')
+
+# 获取数据输入/输出
+# CSV
+# 写入csv文件
+# df.to_csv('foo.csv')
+
+# 读取csv文件
+# pd.read_csv('foo.csv')
+
+# HDF5
+# 读写HDF存储
+# 写入HDF5存储
+# df.to_hdf('foo.h5', 'df')
+
+# 读取HDF5存储
+# pd.read_hdf('foo.h5', 'df')
+
+# Excel
+# 读写MS Excel
+# 写入excel文件
+# df.to_excel('foo.xlsx', sheet_name = 'Sheet1')
+
+# 读取excel文件
+# pd.read_excel('foo.xlsx', 'Sheet1', index_col = None, na_values = ['NA'])
+
+# 陷阱
+# 如果尝试这样操作可能会看到像这样的异常:
+# if pd.Series([False, True, True]):
+#     print('I was true')
