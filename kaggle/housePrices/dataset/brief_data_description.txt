@@ -1,0 +1,162 @@
+SalePrice - the property's sale price in dollars. This is the target variable that you're trying to predict.
+MSSubClass: The building class
+MSZoning: The general zoning classification
+LotFrontage: Linear feet of street connected to property
+LotArea: Lot size in square feet
+Street: Type of road access
+Alley: Type of alley access
+LotShape: General shape of property
+LandContour: Flatness of the property
+Utilities: Type of utilities available
+LotConfig: Lot configuration
+LandSlope: Slope of property
+Neighborhood: Physical locations within Ames city limits
+Condition1: Proximity to main road or railroad
+Condition2: Proximity to main road or railroad (if a second is present)
+BldgType: Type of dwelling
+HouseStyle: Style of dwelling
+OverallQual: Overall material and finish quality
+OverallCond: Overall condition rating
+YearBuilt: Original construction date
+YearRemodAdd: Remodel date
+RoofStyle: Type of roof
+RoofMatl: Roof material
+Exterior1st: Exterior covering on house
+Exterior2nd: Exterior covering on house (if more than one material)
+MasVnrType: Masonry veneer type
+MasVnrArea: Masonry veneer area in square feet
+ExterQual: Exterior material quality
+ExterCond: Present condition of the material on the exterior
+Foundation: Type of foundation
+BsmtQual: Height of the basement
+BsmtCond: General condition of the basement
+BsmtExposure: Walkout or garden level basement walls
+BsmtFinType1: Quality of basement finished area
+BsmtFinSF1: Type 1 finished square feet
+BsmtFinType2: Quality of second finished area (if present)
+BsmtFinSF2: Type 2 finished square feet
+BsmtUnfSF: Unfinished square feet of basement area
+TotalBsmtSF: Total square feet of basement area
+Heating: Type of heating
+HeatingQC: Heating quality and condition
+CentralAir: Central air conditioning
+Electrical: Electrical system
+1stFlrSF: First Floor square feet
+2ndFlrSF: Second floor square feet
+LowQualFinSF: Low quality finished square feet (all floors)
+GrLivArea: Above grade (ground) living area square feet
+BsmtFullBath: Basement full bathrooms
+BsmtHalfBath: Basement half bathrooms
+FullBath: Full bathrooms above grade
+HalfBath: Half baths above grade
+Bedroom: Number of bedrooms above basement level
+Kitchen: Number of kitchens
+KitchenQual: Kitchen quality
+TotRmsAbvGrd: Total rooms above grade (does not include bathrooms)
+Functional: Home functionality rating
+Fireplaces: Number of fireplaces
+FireplaceQu: Fireplace quality
+GarageType: Garage location
+GarageYrBlt: Year garage was built
+GarageFinish: Interior finish of the garage
+GarageCars: Size of garage in car capacity
+GarageArea: Size of garage in square feet
+GarageQual: Garage quality
+GarageCond: Garage condition
+PavedDrive: Paved driveway
+WoodDeckSF: Wood deck area in square feet
+OpenPorchSF: Open porch area in square feet
+EnclosedPorch: Enclosed porch area in square feet
+3SsnPorch: Three season porch area in square feet
+ScreenPorch: Screen porch area in square feet
+PoolArea: Pool area in square feet
+PoolQC: Pool quality
+Fence: Fence quality
+MiscFeature: Miscellaneous feature not covered in other categories
+MiscVal: $Value of miscellaneous feature
+MoSold: Month Sold
+YrSold: Year Sold
+SaleType: Type of sale
+SaleCondition: Condition of sale
+
+
+在美元身价物业的销售价格。这是你试图预测的目标变量。
+MSSubClass：建筑分类
+mszoning：一般的分区分类
+LotFrontage：街道连接属性线性英尺
+LotArea：平方英尺批量
+街道：类型的道路访问
+胡同：类型的访问
+LotShape：财产的形状
+LandContour：财产的平整度
+公用事业：可用的公用事业类型
+LotConfig：很多配置
+LandSlope：坡的财产
+Ames市区范围内的物理位置
+状态：邻近主要道路或铁路
+条件：靠近主要道路或铁路（如果第二存在）
+BldgType：住宅类型
+housestyle：风格的住宅
+overallqual：整体材料和完成质量
+overallcond：总体状况评价
+yearbuilt：原施工日期
+yearremodadd：重塑日期
+RoofStyle：屋顶类型
+RoofMatl：屋面材料
+exterior1st：外部覆盖的房子
+exterior2nd：外部覆盖的房子（如果有一个以上的材料）
+MasVnrType：砌体饰面型
+masvnrarea：砌体饰面面积平方英尺
+exterqual：外部材料质量
+extercond：在外部的物质条件
+基础：基础类型
+BsmtQual：地下室的高度
+bsmtcond：地下室的一般条件
+BsmtExposure：罢工或花园层地下室墙
+bsmtfintype1：质量基底成品区
+bsmtfinsf1：型完成1平方英尺
+bsmtfintype2：质量第二成品区（如果有的话）
+bsmtfinsf2：型完成2平方英尺
+BsmtUnfSF：未完成的平方英尺的地下室
+totalbsmtsf：地下室面积总平方英尺
+加热：加热类型
+heatingqc：加热质量和条件
+中央：中央空调
+电气：电气系统
+1stflrsf：一楼平方英尺
+2ndflrsf：二楼平方英尺
+lowqualfinsf：完成平方英尺Low质量（各楼层）
+grlivarea：以上等级（地）居住面积平方英尺
+BsmtFullBath：地下室全浴室
+BsmtHalfBath：地下室半浴室
+FullBath：完整的浴室级以上
+HalfBath：半浴室级以上
+卧室：卧室以上的地下室水平
+厨房：厨房数量
+kitchenqual：厨房的品质
+totrmsabvgrd：房间总级以上（不包括卫生间）
+功能：家庭功能评级
+一些壁炉壁炉：
+fireplacequ：壁炉质量
+GarageType：车库位置
+GarageYrBlt：建立年车库
+GarageFinish：车库的室内装修
+GarageCars：在汽车车库大小的能力
+GarageArea：在平方英尺的车库规模
+GarageQual：车库质量
+garagecond：车库条件
+paveddrive：铺的车道
+WoodDeckSF：平方英尺的木甲板面积
+openporchsf：平方英尺打开阳台的面积
+enclosedporch：封闭式阳台的面积以平方英尺
+3ssnporch：平方英尺三季阳台的面积
+screenporch：平方英尺纱窗门廊区
+PoolArea：在平方英尺的游泳池
+poolqc：池质量
+栅栏：栅栏质量
+miscfeature：杂项功能在其他类未包括
+miscval：$杂特征值
+MoSold：月销售
+YrSold：年销售
+SaleType：销售类型
+salecondition：销售条件
