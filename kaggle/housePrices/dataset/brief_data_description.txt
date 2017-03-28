@@ -136,7 +136,7 @@ HalfBath：半浴室级以上
 kitchenqual：厨房的品质
 totrmsabvgrd：房间总级以上（不包括卫生间）
 功能：家庭功能评级
-一些壁炉壁炉：
+Fireplaces:一些壁炉壁炉：
 fireplacequ：壁炉质量
 GarageType：车库位置
 GarageYrBlt：建立年车库
