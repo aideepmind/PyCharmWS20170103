@@ -272,16 +272,18 @@ for index in col_test:
     if index not in col_train:
         del test_data[index]
 
-test_id = test_data['Id']
+test_id = test_data['Id'].astype(pd.np.int64)
 train_x = train_data.drop(['Id'], axis=1)
 test_x = test_data.drop(['Id'], axis=1)
 
 # xgb 需要训练集和测试集列完全对齐
 test_x = test_x[train_x.columns]
 
+cols = 293
+
 # 对齐后数据有294个特征，而训练样本只有1460个，相对而言，样本数目偏少。可通过随机森林等算法，对特征做一次初步的选择，取前100即可
 # 特征重要性选择
-# etr = RandomForestRegressor(n_estimators=400)
+etr = RandomForestRegressor(n_estimators=400)
 #                 random_state=1,       # 指在相同数据和相同参数下，是否每次都得一样的结果，如果是1，代表是？
 #                 learning_rate=0.015,  #
 #                 min_samples_split=2,  # 根据属性划分节点时，每个划分最少的样本数
@@ -301,13 +303,16 @@ test_x = test_x[train_x.columns]
 #                 #oob_score            # oob（out of band，带外）数据，即：在某次决策树训练中没有被bootstrap选中的数据。多单个模型的参数训练，
 #                                       # 我们知道可以用cross validation（cv）来进行，但是特别消耗时间，而且对于随机森林这种情况也没有大的必要，所以就用这个数据对决策树模型进行验证，算是一个简单的交叉验证。性能消耗小，但是效果不错
 
-# etr.fit(train_x, train_y)
-# # print(etr.feature_importances_)
-# imp = etr.feature_importances_
-# imp = pd.DataFrame({'feature': train_x.columns, 'score': imp})
+etr.fit(train_x, train_y)
+# print(etr.feature_importances_)
+imp = etr.feature_importances_
+imp = pd.DataFrame({'feature': train_x.columns, 'score': imp})
 # print(imp.sort(['score'], ascending=[0]))  # 按照特征重要性, 进行降序排列, 最重要的特征在最前面
-# imp = imp.sort(['score'], ascending=[0])
+imp = imp.sort(['score'], ascending=[0])
 # imp.to_csv("kaggle/housePrices/temp/feature_importances2.csv", index=False)
+
+
+
 # 进行预测可以有几种形式：
 # predict_proba(x)：给出带有概率值的结果。每个点在所有label的概率和为1.
 # predict(x)：直接给出预测结果。内部还是调用的predict_proba()，根据概率的结果看哪个类型的预测值最高就是哪个类型。
@@ -363,7 +368,7 @@ from sklearn.model_selection import cross_val_score
 #
 def rmse_cv(model):
 # “neg_mean_squared_error”是将预测的relevance的值和实际的relevance的值进行均方误差，即第二步中的MSE的公式。但是用corss_val_score返回的score是负数值，需要加负号再开根号
-    rmse= np.sqrt(-cross_val_score(model, train_x, train_y, scoring="neg_mean_squared_error", cv = 5))    # neg_mean_squared_error: 计算均方误差
+    rmse= np.sqrt(-cross_val_score(model, train_x[imp.head(cols)['feature']], train_y, scoring="neg_mean_squared_error", cv = 5))    # neg_mean_squared_error: 计算均方误差
     return(rmse)
 # RidgeCV
 # min during 12.2 - 12.4
@@ -375,7 +380,7 @@ cv_ridge.plot(title = "Validation")
 plt.xlabel("alpha")
 plt.ylabel("rmse")
 
-model_lasso = LassoCV(alphas = [1, 0.1, 0.001, 0.0005]).fit(train_x, train_y)
+model_lasso = LassoCV(alphas = [1, 0.1, 0.001, 0.0005]).fit(train_x[imp.head(cols)['feature']], train_y)
 rmse_cv(model_lasso).mean()
 
 coef = pd.Series(model_lasso.coef_, index = train_x.columns)
@@ -395,18 +400,38 @@ preds.plot(x = "preds", y = "residuals", kind = "scatter")
 
 import xgboost as xgb
 
-dtrain = xgb.DMatrix(train_x, label = train_y)
-dtest = xgb.DMatrix(test_x)
+dtrain = xgb.DMatrix(train_x[imp.head(120)['feature']], label = train_y)
+# dtest = xgb.DMatrix(test_x[imp.head(cols)['feature']])
 
-params = {"max_depth":2, "eta":0.1}
-model = xgb.cv(params, dtrain,  num_boost_round=500, early_stopping_rounds=100)
+params = {
+    "max_depth": 2,
+    "eta": 0.08,
+    "min_child_weight": 1,
+    "gamma": 0,
+    "objective": "reg:linear",
+    "subsample": 0.8,
+    "colsample_bytree": 0.8}
+model = xgb.cv(params, dtrain,  num_boost_round=1000, early_stopping_rounds=100, nfold=5, metrics='rmse')
 model.loc[30:,["test-rmse-mean", "train-rmse-mean"]].plot()
+print(model['test-rmse-mean'].min())
 
-model_xgb = xgb.XGBRegressor(n_estimators=360, max_depth=2, learning_rate=0.1) #the params were tuned using xgb.cv
-model_xgb.fit(train_x, train_y)
 
-xgb_preds = np.expm1(model_xgb.predict(test_x))
-lasso_preds = np.expm1(model_lasso.predict(test_x))
+model_xgb = xgb.XGBRegressor(
+    n_estimators=410,
+    learning_rate=0.08,
+    max_depth=2,
+    min_child_weight=3,
+    gamma=0,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    objective='reg:linear',
+    nthread=4,
+    scale_pos_weight=1,
+    seed=27) #the params were tuned using xgb.cv
+model_xgb.fit(train_x[imp.head(cols)['feature']], train_y)
+
+xgb_preds = np.expm1(model_xgb.predict(test_x[imp.head(cols)['feature']]))
+lasso_preds = np.expm1(model_lasso.predict(test_x[imp.head(cols)['feature']]))
 
 predictions = pd.DataFrame({"xgb":xgb_preds, "lasso":lasso_preds})
 predictions.plot(x = "xgb", y = "lasso", kind = "scatter")
@@ -415,7 +440,12 @@ preds = 0.7*lasso_preds + 0.3*xgb_preds
 solution = pd.DataFrame({"Id": test_id, "SalePrice":preds})
 solution.to_csv("kaggle/housePrices/temp/ridge_sol.csv", index = False)
 
-
+# 1.Get More Data 2.Invent More Data 3.Clean Your Data 4.Resample Data 5.Reframe Your Problem 6.Rescale Your Data 7.Transform Your Data 8.Project Your Data 9.Feature Selection 10.Feature Engineering
+# 1.Resampling Method 2.Evaluation Metric 3.Baseline Performance 4.Spot Check Linear Algorithms 5.Spot Check Nonlinear Algorithms 6.Steal from Literature 7.Standard Configurations
+# 1.Diagnostics 2.Try Intuition 3.Steal from Literature 4.Random Search 5.Grid Search 6.Optimize 7.Alternate Implementations 8.Algorithm Extensions 9.Algorithm Customizations 10.Contact Experts
+# 1.Blend Model Predictions 2.Blend Data Representations 3.Blend Data Samples 4.Correct Predictions 5.Learn to Combine
+# 尝试聚类，去掉异常值
+# 把train和test结合起来，创造更多的数据
 
 #Import libraries:
 import pandas as pd
@@ -434,19 +464,20 @@ rcParams['figure.figsize'] = 12, 4
 # target = 'Disbursed'
 # IDcol = 'ID'
 
-def modelfit(alg, train_x, train_y,useTrainCV=True, cv_folds=5, early_stopping_rounds=50):
+# useTrainCV=True
+def modelfit(alg, train_x, train_y,useTrainCV=False, cv_folds=5, early_stopping_rounds=100):
     if useTrainCV:
         xgb_param = alg.get_xgb_params()
         xgtrain = xgb.DMatrix(train_x, label=train_y)
         cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
             metrics='rmse', early_stopping_rounds=early_stopping_rounds)
-        alg.set_params(n_estimators=cvresult.shape[0])
+        alg.set_params(n_estimators=cvresult.shape[0])  # 行(第一维)的长度
 
     #Fit the algorithm on the data
     alg.fit(train_x, train_y, eval_metric='rmse')
 
     #Predict training set:
-    dtrain_predictions = alg.predict(train_x)
+    # dtrain_predictions = alg.predict(train_x)
     # dtrain_predprob = alg.predict_proba(train_x)[:,1]
 
     #Print model report:
@@ -456,36 +487,93 @@ def modelfit(alg, train_x, train_y,useTrainCV=True, cv_folds=5, early_stopping_r
     # print("rmse Score (Train): %f" % metrics.roc_auc_score(train_y, dtrain_predprob))
     print('Training Error: {:.3f}'.format(1 - alg.score(train_x, train_y)))
 
-    feat_imp = pd.Series(alg.booster().get_fscore()).sort_values(ascending=False)
+    # feat_imp = pd.Series(alg.booster().get_fscore()).sort_values(ascending=False)
     # feat_imp = pd.concat([feat_imp.head(50),  feat_imp.tail(50)])
-    feat_imp.head(50).plot(kind='bar', title='Feature Importances')
-    plt.ylabel('Feature Importance Score')
+    # feat_imp.head(50).plot(kind='bar', title='Feature Importances')
+    # plt.ylabel('Feature Importance Score')
+
+    dtest_predictions = alg.predict(test_x[imp.head(293)['feature']])
+    dtest_predictions = np.expm1(dtest_predictions)
+    test_result = pd.DataFrame({"Id": test_id, "SalePrice": dtest_predictions})
+    test_result.to_csv("kaggle/housePrices/temp/xgb_test_result.csv", index=False)
 
 # Choose all predictors except target & IDcols
 xgb1 = XGBRegressor(
-    learning_rate=0.1,
-    n_estimators=500,
-    max_depth=5,
+    n_estimators=1000,
+    learning_rate=0.08,
+    max_depth=2,
     min_child_weight=1,
     gamma=0,
     subsample=0.8,
     colsample_bytree=0.8,
     objective='reg:linear',
-    nthread=4,
-    scale_pos_weight=1,
-    seed=27)
-modelfit(xgb1, train_x, train_y)
+    # scale_pos_weight=1,
+    # seed=27,
+    nthread=4)
+modelfit(xgb1, train_x[imp.head(293)['feature']], train_y)
 
-# 3,2
+# max_features
+# for i in np.arange(10):
+#     print('i=', i)
+#     modelfit(xgb1, train_x[imp.head(120 + i * 10)['feature']], train_y)
+
+# {'max_depth': 2, 'min_child_weight': 3},
+# -0.015092031338683542)
+# param_test1 = {
+#  'max_depth': [2, 3, 4, 5],
+#  'min_child_weight': [1, 2, 3, 4]
+# }
+
+# {'n_estimators': 410},
+#  -0.015797678676584055)
+# param_test1 = {
+#  'n_estimators': [385, 390, 395, 400, 405, 410, 415]
+# }
+
+# {'learning_rate': 0.08},
+# -0.015063409091199001)
+# param_test1 = {
+#  'learning_rate': [0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]
+# }
+
+# {'gamma': 0.0},
+#  -0.015063409091199001)
+# param_test1 = {
+#  'gamma': [i/10.0 for i in range(0,5)]
+# }
+
+# {'colsample_bytree': 0.8, 'subsample': 0.8},
+#  -0.015063409091199001)
+# param_test1 = {
+#  'subsample':[i/10.0 for i in range(6,10)],
+#  'colsample_bytree':[i/10.0 for i in range(6,10)]
+# }
+
+ # {'reg_alpha': 0.1},
+ # -0.014945822756303013)
 param_test1 = {
- 'max_depth': [3, 4, 5, 6, 7],
- 'min_child_weight': [1, 2, 3, 4, 5, 6]
+ 'reg_alpha':[0.05, 0.06,  0.07,  0.08,  0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]
 }
 
-# scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
-gsearch1 = GridSearchCV(estimator = XGBRegressor(learning_rate =0.1, n_estimators=500, max_depth=5, gamma=0, subsample=0.8, colsample_bytree=0.8,
- objective= 'reg:linear', nthread=4, scale_pos_weight=1, seed=27),
- param_grid = param_test1, scoring='neg_mean_squared_error',n_jobs=4,iid=False, cv=5)
-gsearch1.fit(train_x, train_y)
+gsearch1 = GridSearchCV(
+    estimator = XGBRegressor(
+        n_estimators=1000,
+        learning_rate=0.08,
+        max_depth=2,
+        min_child_weight=3,
+        gamma=0,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        objective='reg:linear',
+        # scale_pos_weight=1,
+        # seed=27,
+        nthread=4),
+    param_grid=param_test1,
+    scoring='neg_mean_squared_error',   # scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    n_jobs=4,
+    iid=False,
+    cv=5)
+gsearch1.fit(train_x[imp.head(120)['feature']], train_y)
 gsearch1.grid_scores_, gsearch1.best_params_, gsearch1.best_score_
 
+# 0.12831
