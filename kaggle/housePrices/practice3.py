@@ -25,6 +25,7 @@ test_data = pd.read_csv('kaggle/housePrices/dataset/test.csv')
 all_data = pd.concat((train_data[test_data.columns], test_data))
 # data exploration and data processing
 def get_missing_cols(data, col):
+    # all_data.isnull().sum().order(ascending = False)
     return data.columns[data.isnull().any()].tolist()
 # Looking at categorical values
 def cat_frequency(data, col):
@@ -261,7 +262,7 @@ all_data.loc[all_data['Id'] == 333, 'BsmtFinType2'] = 'Rec' # LwQ/BLQ/LwQ
 
 # test
 basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF']
-print(test_data['BsmtQual'].isnull().sum())
+# print(test_data['BsmtQual'].isnull().sum())
 # print(test_data['BsmtQual'].isnull().sum())
 # 其中,有两行有BsmtQual为NaN,该两行的其他列都有值
 # print(test_data[basement_cols][test_data['BsmtQual'].isnull() == True])
@@ -297,7 +298,7 @@ cat_imputation(all_data, 'BsmtHalfBath', '0')
 for cols in basement_cols:
     if all_data[cols].dtype == np.object:
         cat_imputation(all_data, cols, 'None')
-    else:
+    elif cols != 'Id':
         cat_imputation(all_data, cols, 0.0)
 
 
@@ -325,93 +326,106 @@ cat_imputation(all_data, 'Functional', 'Typ')
 # cat_frequency(all_data, 'FireplaceQu')
 # print(pd.crosstab(all_data.Fireplaces, all_data.FireplaceQu))
 cat_imputation(all_data, 'FireplaceQu', 'None')
-cat_imputation(all_data, 'FireplaceQu', 'None')
 
 
 # Garage train & test
 # train
-garage_cols = ['GarageType', 'GarageQual', 'GarageCond', 'GarageYrBlt', 'GarageFinish', 'GarageCars', 'GarageArea']
+garage_cols = ['Id', 'GarageType', 'GarageQual', 'GarageCond', 'GarageYrBlt', 'GarageFinish', 'GarageCars', 'GarageArea']
+all_data[garage_cols][all_data['GarageFinish'].isnull() == True].to_csv("kaggle/housePrices/temp/GarageFinish.csv", index=False)
 # cat_null_sum('GarageType') 157
 # cat_null_sum('GarageQual') 159
+# print(pd.crosstab(all_data.GarageQual, all_data.GarageCond))
+all_data.loc[all_data['Id'] == 2127, 'GarageQual'] = 'TA'
+all_data.loc[all_data['Id'] == 2127, 'GarageCond'] = 'TA' # max
+all_data.loc[all_data['Id'] == 2127, 'GarageYrBlt'] = 1978 # mean
+all_data.loc[all_data['Id'] == 2127, 'GarageFinish'] = 'Fin' # 因为是1978年，所以是Finished
+# 因为Id=2577只有GarageType为Detchd，其他列没有值，所干脆把GarageType置为空
+all_data.loc[all_data['Id'] == 2577, 'GarageType'] = 'None'
 # cat_null_sum('GarageCond') 159
+# 同GarageQual
 # cat_null_sum('GarageYrBlt') 159
+# 同GarageQual
 # cat_null_sum('GarageFinish') 159
+# 同GarageQual
 # cat_null_sum('GarageCars') 1
+# print(all_data[garage_cols][all_data['GarageCars'].isnull() == True])
+# 同GarageQual 2577
 # cat_null_sum('GarageArea') 1
-# print(all_data[garage_cols][all_data['GarageQual'].isnull() == True])
+# print(all_data[garage_cols][all_data['GarageArea'].isnull() == True])
+# 同GarageQual 2577
 for cols in garage_cols:
-    if train_data[cols].dtype == np.object:
-        cat_imputation(train_data, cols, 'None')
-    else:
-        cat_imputation(train_data, cols, 0)
-print()
-# test set
-garage_cols = ['GarageType', 'GarageQual', 'GarageCond', 'GarageYrBlt', 'GarageFinish', 'GarageCars', 'GarageArea']
-# print(test_data[garage_cols][test_data['GarageType'].isnull() == True])
-for cols in garage_cols:
-    if test_data[cols].dtype == np.object:
-        cat_imputation(test_data, cols, 'None')
-    else:
-        cat_imputation(test_data, cols, 0)
+    if all_data[cols].dtype == np.object:
+        cat_imputation(all_data, cols, 'None')
+    elif cols != 'Id':
+        cat_imputation(all_data, cols, 0)
+
 
 # PoolQC & PoolArea train & test
-# 不易处理, 并且分布偏差大, drop
-test_data = test_data.drop(['PoolQC'], axis=1)
-train_data = train_data.drop(['PoolQC'], axis=1)
-test_data = test_data.drop(['PoolArea'], axis=1)
-train_data = train_data.drop(['PoolArea'], axis=1)
+# cat_null_sum('PoolQC')
+# print(all_data['PoolQC'][all_data['PoolQC'].isnull() == False])
+# 只有10个大于0的值，drop
+all_data = all_data.drop(['PoolQC'], axis=1)
+# cat_null_sum('PoolArea')
+# 只有13个大于0的值，drop
+all_data = all_data.drop(['PoolArea'], axis=1)
+
 
 # Fence train & test
-# cat_frequency(test_data, 'Fence')
-# cat_frequency(train_data, 'Fence')
-cat_imputation(test_data, 'Fence', 'None')
-cat_imputation(train_data, 'Fence', 'None')
+# cat_null_sum('Fence')
+# cat_frequency(all_data, 'Fence')
+cat_imputation(all_data, 'Fence', 'None')
+
 
 # MiscFeature train & test
-cat_imputation(test_data, 'MiscFeature', 'None')
-cat_imputation(train_data, 'MiscFeature', 'None')
+# cat_null_sum('MiscFeature')
+# cat_frequency(all_data, 'MiscFeature')
+cat_imputation(all_data, 'MiscFeature', 'None')
+
 
 # SaleType test
-# cat_frequency(test_data, 'SaleType')
-cat_imputation(test_data, 'SaleType', 'WD')
+# cat_null_sum('SaleType')
+# cat_frequency(all_data, 'SaleType')
+cat_imputation(all_data, 'SaleType', 'WD')
+
 
 # Electrical train
-# cat_frequency(train_data, 'Electrical')
-cat_imputation(train_data, 'Electrical', 'SBrkr')
+# cat_null_sum('Electrical')
+# cat_frequency(all_data, 'Electrical')
+cat_imputation(all_data, 'Electrical', 'SBrkr')
 
-train_data.isnull().sum().max()
-test_data.isnull().sum().max()
+
+# 查看是否还有缺失值
+all_data.isnull().sum().max()
+
 
 # 到此为止，我们基本把所有的缺失值都填补完整了，但是还有一列MSSubClass，原始数据类型是int64,我并不认为这一列具有可比性，所以把MSSubClass映射成object
 # convert MSSubClass to object
-train_data = train_data.replace({"MSSubClass": {20: "A", 30: "B", 40: "C", 45: "D", 50: "E",
+all_data = all_data.replace({"MSSubClass": {20: "A", 30: "B", 40: "C", 45: "D", 50: "E",
                                                 60: "F", 70: "G", 75: "H", 80: "I", 85: "J",
                                                 90: "K", 120: "L", 150: "M", 160: "N", 180: "O", 190: "P"}})
-test_data = test_data.replace({"MSSubClass": {20: "A", 30: "B", 40: "C", 45: "D", 50: "E",
-                                              60: "F", 70: "G", 75: "H", 80: "I", 85: "J",
-                                              90: "K", 120: "L", 150: "M", 160: "N", 180: "O", 190: "P"}})
+
 
 # 将所有categorical类型的特征进行one-hot编码。需要注意的是：训练集和测试集中，相同的列可能会有不同的类型需要统一
-for col in test_data.columns:
-    t1 = test_data[col].dtype
-    t2 = train_data[col].dtype
-    if t1 != t2:
-        print(col, t1, t2)
+# for col in test_data.columns:
+#     t1 = test_data[col].dtype
+#     t2 = train_data[col].dtype
+#     if t1 != t2:
+#         print(col, t1, t2)
 
 # convert to type of int64
-cols = ['BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath']
-for col in cols:
-    tmp_col = test_data[col].astype(pd.np.float64)
-    tmp_col = pd.DataFrame({col: tmp_col})
-    del test_data[col]
-    test_data = pd.concat((test_data, tmp_col), axis=1)
-
-cols = ['GarageCars', 'GarageArea', 'BsmtFullBath']
-for col in cols:
-    tmp_col = train_data[col].astype(pd.np.float64)
-    tmp_col = pd.DataFrame({col: tmp_col})
-    del train_data[col]
-    train_data = pd.concat((train_data, tmp_col), axis=1)
+# cols = ['BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath']
+# for col in cols:
+#     tmp_col = test_data[col].astype(pd.np.float64)
+#     tmp_col = pd.DataFrame({col: tmp_col})
+#     del test_data[col]
+#     test_data = pd.concat((test_data, tmp_col), axis=1)
+#
+# cols = ['GarageCars', 'GarageArea', 'BsmtFullBath']
+# for col in cols:
+#     tmp_col = train_data[col].astype(pd.np.float64)
+#     tmp_col = pd.DataFrame({col: tmp_col})
+#     del train_data[col]
+#     train_data = pd.concat((train_data, tmp_col), axis=1)
 
 # one-hot编码，pandas get_dummies
 # for cols in train_data.columns:
@@ -424,47 +438,44 @@ for col in cols:
 #         test_data = pd.concat((test_data, pd.get_dummies(test_data[cols], prefix=cols)), axis=1)
 #         del test_data[cols]
 
-train_y = train_data['SalePrice']
-train_y = np.log1p(train_y)
 
-#log transform skewed numeric features:
-# from scipy.stats import skew
-# numeric_feats = train_data.dtypes[train_data.dtypes != "object"].index
-# skewed_feats = train_data[numeric_feats].apply(lambda x: skew(x.dropna())) #Computes the skewness of a data set.
-# skewed_feats = skewed_feats[skewed_feats > 0.75]
-# skewed_feats = skewed_feats.index
-# skewed_feats = skewed_feats.drop('SalePrice')
-# train_data[skewed_feats] = np.log1p(train_data[skewed_feats])
-# test_data[skewed_feats] = np.log1p(test_data[skewed_feats])
+# log transform skewed numeric features:
+from scipy.stats import skew
+numeric_feats = all_data.dtypes[all_data.dtypes != "object"].index
+skewed_feats = all_data[numeric_feats].apply(lambda x: skew(x.dropna())) #Computes the skewness of a data set.
+skewed_feats = skewed_feats[skewed_feats > 0.75]
+skewed_feats = skewed_feats.index
+all_data[skewed_feats] = np.log1p(all_data[skewed_feats])
 
 # dummy
-train_data = pd.get_dummies(train_data)
-test_data = pd.get_dummies(test_data)
+all_data = pd.get_dummies(all_data)
+train_x = all_data[all_data['Id'] < 1461]
+test_x = all_data[all_data['Id'] > 1460]
+all_data = all_data.drop(['Id'], axis=1)
+train_y = np.log1p(train_data['SalePrice'])
+test_id = test_data['Id'].astype(pd.np.int64)
+cols = 120
+
+# pd.DataFrame(train_x.columns).to_csv("kaggle/housePrices/temp/columns.csv", index=False)/
+
 
 # 进行one-hot编码后，会出现一种情况就是：某个特征的某一个取值只出现在训练集中，没有出现在测试集中，或者相反，这个时候需要特征对齐
 # 特征对齐
-col_train = train_data.columns
-col_test = test_data.columns
-for index in col_train:
-    if index not in col_test:
-        del train_data[index]
+# col_train = train_data.columns
+# col_test = test_data.columns
+# for index in col_train:
+#     if index not in col_test:
+#         del train_data[index]
+#
+# col_train = train_data.columns
+# col_test = test_data.columns
+# for index in col_test:
+#     if index not in col_train:
+#         del test_data[index]
 
-col_train = train_data.columns
-col_test = test_data.columns
-for index in col_test:
-    if index not in col_train:
-        del test_data[index]
-
-test_id = test_data['Id'].astype(pd.np.int64)
-train_x = train_data.drop(['Id'], axis=1)
-test_x = test_data.drop(['Id'], axis=1)
-
-# xgb 需要训练集和测试集列完全对齐
-test_x = test_x[train_x.columns]
-cols = 293
 
 # 数据标准化
-scaler = preprocessing.scale(train_x)
+# scaler = preprocessing.scale(train_x)
 # StandardScaler().fit_transform(train_x)
 
 
@@ -568,14 +579,14 @@ plt.xlabel("alpha")
 plt.ylabel("rmse")
 
 # 0.0007
-alphas = [0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001]
+alphas = [0.0005, 0.001, 0.01, 1, 5, 10]
 cv_lasso = [rmse_cv(Lasso(alpha = alpha)).mean() for alpha in alphas]
 cv_lasso = pd.Series(cv_lasso, index = alphas)
 cv_lasso.plot(title = "Validation")
 plt.xlabel("alpha")
 plt.ylabel("rmse")
 
-model_lasso = LassoCV(alphas = [0.0007]).fit(train_x[imp.head(cols)['feature']], train_y)
+model_lasso = LassoCV(alphas = [0.0005, 0.001, 0.01, 1, 5]).fit(train_x[imp.head(cols)['feature']], train_y)
 rmse_cv(model_lasso).mean()
 
 coef = pd.Series(model_lasso.coef_, index = train_x.columns)
@@ -707,7 +718,7 @@ xgb1 = XGBRegressor(
     # scale_pos_weight=1,
     # seed=27,
     nthread=4)
-modelfit(xgb1, scaler, train_y)
+modelfit(xgb1, train_x, train_y)
 
 # max_features
 # for i in np.arange(10):
