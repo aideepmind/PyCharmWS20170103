@@ -35,9 +35,14 @@ def cat_describe(data, col):
 # Imputing the missing values
 def cat_imputation(data, col, val):
     data.loc[data[col].isnull(), col] = val
+def cat_null_sum(col):
+    print(all_data[col].isnull().sum())
 
-#
+# 区分直方图与条形图：
 # 条形图是用条形的长度表示各类别频数的多少，其宽度（表示类别）则是固定的；
+# 直方图是用面积表示各组频数的多少，矩形的高度表示每一组的频数或频率，宽度则表示各组的组距，因此其高度与宽度均有意义。
+# 由于分组数据具有连续性，直方图的各矩形通常是连续排列，而条形图则是分开排列。
+# 条形图主要用于展示分类数据，而直方图则主要用于展示数据型数据
 # bar
 def bar(column):
     plt.figure()
@@ -162,119 +167,184 @@ def heatmap(columns):
 # print(len(all_data[all_data['MSSubClass'] > 120]['MSSubClass']))
 # all_data[all_data['MSSubClass'] > 120]['MSSubClass'] = all_data['MSSubClass'].mean() # wrong code
 # all_data['MSSubClass'].mean() #57.1377183967112,so use 60
-all_data.loc[all_data['MSSubClass'] > 120, 'MSSubClass'] = 60
+# all_data.loc[all_data['MSSubClass'] > 120, 'MSSubClass'] = 60
 
 
 # MSZoning test，使用了交叉表，里面有三个比较模拟两可的值，需要在模型优化时再重新设置一下，看哪一个妥当
-# print(test_data['MSZoning'].isnull().sum())
-# print(test_data[test_data['MSZoning'].isnull() == True])
-# print(pd.crosstab(test_data.MSSubClass, test_data.MSZoning))
-test_data.loc[test_data['MSSubClass'] == 20, 'MSZoning'] = 'RL'
-test_data.loc[test_data['MSSubClass'] == 30, 'MSZoning'] = 'RM'
-test_data.loc[test_data['MSSubClass'] == 70, 'MSZoning'] = 'RM'
-# probplot('MSSubClass')
+# print(all_data['MSZoning'].isnull().sum())
+# print(all_data[all_data['MSZoning'].isnull() == True])
+# print(all_data[['MSZoning', 'MSSubClass']][all_data['MSZoning'].isnull() == True])
+# print(pd.crosstab(all_data.MSSubClass, all_data.MSZoning))
+all_data.loc[all_data['Id'] == 1916, 'MSZoning'] = 'RM'# RL
+all_data.loc[all_data['Id'] == 2217, 'MSZoning'] = 'RL'
+all_data.loc[all_data['Id'] == 2905, 'MSZoning'] = 'RL'
+all_data.loc[all_data['Id'] == 2251, 'MSZoning'] = 'RM'# RL
+
 
 # LotFrontage train & test，fill value 采用LotArea平方根，感觉不妥当，还得回头修改
+# print(all_data['LotFrontage'].isnull().sum())
 # plt.scatter(train_data['LotFrontage'], train_data['SalePrice'])
 # train_data['LotFrontage'].corr(np.sqrt(train_data['LotArea']))
-train_data.LotFrontage[train_data['LotFrontage'].isnull()] = np.sqrt(train_data.LotArea[train_data['LotFrontage'].isnull()])
-test_data.LotFrontage[test_data['LotFrontage'].isnull()] = np.sqrt(test_data.LotArea[test_data['LotFrontage'].isnull()])
+# train_data.LotFrontage[train_data['LotFrontage'].isnull()] = np.sqrt(train_data.LotArea[train_data['LotFrontage'].isnull()])
+# test_data.LotFrontage[test_data['LotFrontage'].isnull()] = np.sqrt(test_data.LotArea[test_data['LotFrontage'].isnull()])
+# 486个空值，不过，重要性排名竟然得第一，怎麼搞的？暂时delete
+all_data = all_data.drop(['LotFrontage'], axis=1)
 
 # Alley train & test
+# print(all_data['Alley'].isnull().sum())
 # print(cat_frequency (test_data, 'Alley'))
 # print(cat_frequency (train_data, 'Alley'))
 # Alley这个特征有太多的nans,这里填充None，也可以直接删除，不使用。后面在根据特征的重要性选择特征是，也可以舍去
-cat_imputation(test_data, 'Alley', 'None')
-cat_imputation(train_data, 'Alley', 'None')
+# cat_imputation(test_data, 'Alley', 'None')
+# cat_imputation(train_data, 'Alley', 'None')
+all_data = all_data.drop(['Alley'], axis=1)
 
 # Utilities test
 # 并且这个column中值得分布极为不均匀，drop
+# print(all_data['Utilities'].isnull().sum())
 # print(cat_frequency (test_data, 'Utilities'))
 # print(cat_frequency (train_data, 'Utilities'))
 # print(test_data.loc[test_data['Utilities'].isnull() == True])
-test_data = test_data.drop(['Utilities'], axis=1)
-train_data = train_data.drop(['Utilities'], axis=1)
+# test_data = test_data.drop(['Utilities'], axis=1)
+# train_data = train_data.drop(['Utilities'], axis=1)
+all_data = all_data.drop(['Utilities'], axis=1)
 
 # Exterior1st & Exterior2nd test，这里采用交叉表，但是结果并不理想，因为几个值都很接近暂时采取频率最高的
 # 检查Exterior1st 和 Exterior2nd 是否存在缺失值共现的情况
+# print(all_data['Exterior1st'].isnull().sum())
+# print(all_data['Exterior2nd'].isnull().sum())
 # cat_frequency (test_data, 'Exterior1st')
 # cat_frequency (train_data, 'Exterior1st')
-# print(test_data[['Exterior1st', 'Exterior2nd', 'ExterQual']][test_data['Exterior1st'].isnull() == True])
-# print(pd.crosstab(test_data.Exterior1st, test_data.ExterQual))
-test_data.loc[test_data['Exterior1st'].isnull(), 'Exterior1st'] = 'VinylSd'
-test_data.loc[test_data['Exterior2nd'].isnull(), 'Exterior2nd'] = 'VinylSd'
+# print(all_data[['Exterior1st', 'Exterior2nd', 'ExterQual']][all_data['Exterior1st'].isnull() == True])
+# print(pd.crosstab(all_data.Exterior1st, all_data.ExterQual))
+all_data.loc[all_data['Exterior1st'].isnull(), 'Exterior1st'] = 'HdBoard'# HdBoard/MetalSd/VinylSd/Wd Sdng/Plywood
+all_data.loc[all_data['Exterior2nd'].isnull(), 'Exterior2nd'] = 'HdBoard'# HdBoard/MetalSd/VinylSd/Wd Sdng/Plywood
 
 # MasVnrType & MasVnrArea train & test
+# print(all_data['MasVnrType'].isnull().sum())
+# print(all_data['MasVnrArea'].isnull().sum())
 # print(test_data[['MasVnrType', 'MasVnrArea']][test_data['MasVnrType'].isnull() == True])
 # print(train_data[['MasVnrType', 'MasVnrArea']][train_data['MasVnrType'].isnull() == True])
 # So the missing values for the "MasVnr..." Variables are in the same rows.
-# cat_exploration(test_data, 'MasVnrType')
-# cat_exploration(train_data, 'MasVnrType')
-cat_imputation(test_data, 'MasVnrType', 'None')
-cat_imputation(train_data, 'MasVnrType', 'None')
-cat_imputation(test_data, 'MasVnrArea', 0.0)
-cat_imputation(train_data, 'MasVnrArea', 0.0)
+# cat_frequency(test_data, 'MasVnrType')
+# cat_frequency(train_data, 'MasVnrType')
+# cat_imputation(test_data, 'MasVnrType', 'None')
+# cat_imputation(train_data, 'MasVnrType', 'None')
+# cat_imputation(test_data, 'MasVnrArea', 0.0)
+# cat_imputation(train_data, 'MasVnrArea', 0.0)
+# MasVnrType有24个空，而MasVnrArea有23个空，有一个不一致：MasVnrArea = 198.0
+# all_data.loc[all_data['MasVnrArea'] == 198.0, 'MasVnrType']
+all_data.loc[all_data['Id'] == 2611, 'MasVnrType'] = 'BrkFace'    # Stone
+cat_imputation(all_data, 'MasVnrType', 'None')
+cat_imputation(all_data, 'MasVnrArea', 0.0)
 
 # basement train & test
 # train
-basement_cols = ['BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2', 'BsmtFinSF1', 'BsmtFinSF2']
-# print(train_data[basement_cols][train_data['BsmtQual'].isnull() == True])
-for cols in basement_cols:
-    if 'FinFS' not in cols:
-        cat_imputation(train_data, cols, 'None')
+basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2', 'BsmtFinSF1', 'BsmtFinSF2']
+# print(train_data['BsmtQual'].isnull().sum())
+# print(train_data[basement_cols][train_data['BsmtExposure'].isnull() == True])
+# print(train_data[basement_cols][train_data['BsmtFinType2'].isnull() == True])
+# print(pd.crosstab(all_data.BsmtQual, all_data.BsmtExposure))
+# cat_frequency(all_data, 'BsmtExposure')
+# BsmtExposure和BsmtFinType2一共38个空值并有2个不一致，其他37个空值，且一致
+# d1 = all_data[all_data['BsmtFinSF1'] > 1000]
+# d1 = all_data[all_data['BsmtFinSF1'] < 1200]
+# cat_frequency(d1, 'BsmtExposure')
+all_data.loc[all_data['Id'] == 949, 'BsmtExposure'] = 'No'
+# d1 = all_data[all_data['BsmtFinSF2'] > 450]
+# d1 = d1[d1['BsmtFinSF2'] < 500]
+# cat_frequency(d1, 'BsmtFinType2')
+all_data.loc[all_data['Id'] == 333, 'BsmtFinType2'] = 'Rec' # LwQ/BLQ/LwQ
+# for cols in basement_cols:
+#     if 'FinFS' not in cols:
+#         cat_imputation(all_data, cols, 'None')
+
 # test
-basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2']
+basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF']
+print(test_data['BsmtQual'].isnull().sum())
+# print(test_data['BsmtQual'].isnull().sum())
+# 其中,有两行有BsmtQual为NaN,该两行的其他列都有值
+# print(test_data[basement_cols][test_data['BsmtQual'].isnull() == True])
+# print(pd.crosstab(all_data.BsmtQual, all_data.BsmtFinType1))
+all_data.loc[all_data['Id'] == 2218, 'BsmtCond'] = 'TA' # Gd
+all_data.loc[all_data['Id'] == 2219, 'BsmtCond'] = 'TA' # Gd
+# 其中,有三行只有BsmtCond为NaN,该三行的其他列都有值
 # print(test_data[basement_cols][test_data['BsmtCond'].isnull() == True])
-# 其中,有三行只有BsmtCond为NaN,该三行的其他列均有值  580  725  1064
-# print(pd.crosstab(test_data.BsmtCond, test_data.BsmtQual))
-test_data.loc[test_data['Id'] == 580, 'BsmtCond'] = 'TA'
-test_data.loc[test_data['Id'] == 725, 'BsmtCond'] = 'TA'
-test_data.loc[test_data['Id'] == 1064, 'BsmtCond'] = 'TA'
-# 除了上述三行之外, 其他行的NaN都是一样的
+# print(pd.crosstab(all_data.BsmtCond, all_data.BsmtQual))
+# d1 = all_data[all_data['BsmtFinSF1'] > 1000]
+# d1 = d1[d1['BsmtFinSF1'] < 1100]
+# cat_frequency(d1, 'BsmtCond')
+all_data.loc[all_data['Id'] == 2041, 'BsmtCond'] = 'TA'
+all_data.loc[all_data['Id'] == 2186, 'BsmtCond'] = 'TA'
+all_data.loc[all_data['Id'] == 2525, 'BsmtCond'] = 'TA'
+# 其中,有一行只有BsmtExposure为NaN,该一行的其他列都有值
+# print(test_data[basement_cols][test_data['BsmtExposure'].isnull() == True])
+# print(pd.crosstab(all_data.BsmtExposure, all_data.BsmtQual))
+all_data.loc[all_data['Id'] == 2349, 'BsmtExposure'] = 'No'
+# print(test_data[basement_cols][test_data['BsmtFinSF1'].isnull() == True])
+cat_imputation(all_data, 'BsmtFinSF1', '0')
+# print(test_data[basement_cols][test_data['BsmtFinSF2'].isnull() == True])
+cat_imputation(all_data, 'BsmtFinSF2', '0')
+# print(test_data[basement_cols][test_data['BsmtUnfSF'].isnull() == True])
+cat_imputation(all_data, 'BsmtUnfSF', '0')
+# print(test_data[basement_cols][test_data['TotalBsmtSF'].isnull() == True])
+cat_imputation(all_data, 'TotalBsmtSF', '0')
+# print(test_data[basement_cols][test_data['BsmtFullBath'].isnull() == True])
+cat_imputation(all_data, 'BsmtFullBath', '0')
+# print(test_data[basement_cols][test_data['BsmtHalfBath'].isnull() == True])
+cat_imputation(all_data, 'BsmtHalfBath', '0')
+# 除了上述之外, 其他行的NaN都是一样的
 for cols in basement_cols:
-    if test_data[cols].dtype == np.object:
-        cat_imputation(test_data, cols, 'None')
+    if all_data[cols].dtype == np.object:
+        cat_imputation(all_data, cols, 'None')
     else:
-        cat_imputation(test_data, cols, 0.0)
-cat_imputation(test_data, 'BsmtFinSF1', '0')
-cat_imputation(test_data, 'BsmtFinSF2', '0')
-cat_imputation(test_data, 'BsmtUnfSF', '0')
-cat_imputation(test_data, 'TotalBsmtSF', '0')
-cat_imputation(test_data, 'BsmtFullBath', '0')
-cat_imputation(test_data, 'BsmtHalfBath', '0')
+        cat_imputation(all_data, cols, 0.0)
+
+
 # 对于BsmtQual这个特征，取值有 Ex，Gd，TA，Fa，Po. 从数据的说明中可以看出，这依次是优秀，好，次好，一般，差几个等级，这具有明显的可比较性，可以使用map编码
 # 除了BsmtQual这个特征以外，其他几个特征，比如BsmtCond，HeatingQC等都可以尝试类似的编码方式。避免使用one-hot编码
-train_data = train_data.replace({'BsmtQual': {'Ex': 5, 'Gd': 4, 'TA': 3, 'Fa': 2, 'Po': 1, np.NaN: 0}})
-test_data = test_data.replace({'BsmtQual': {'Ex': 5, 'Gd': 4, 'TA': 3, 'Fa': 2, 'Po': 1, np.NaN: 0}})
+# all_data = all_data.replace({'BsmtQual': {'Ex': 5, 'Gd': 4, 'TA': 3, 'Fa': 2, 'Po': 1, np.NaN: 0}})
+
 
 # KitchenQual test，这里使用交叉表，得出的结论模棱两可，可以在TA和Gd中选择，后续优化时，需考虑
-# cat_exploration(test_data, 'KitchenQual')
-# cat_exploration(train_data, 'KitchenQual')
-# print(test_data[['KitchenQual', 'KitchenAbvGr']][test_data['KitchenQual'].isnull() == True])
-# print(pd.crosstab(test_data.KitchenQual, test_data.KitchenAbvGr))
-cat_imputation(test_data, 'KitchenQual', 'TA')
+# cat_frequency(all_data, 'KitchenQual')
+# print(all_data[['KitchenQual', 'KitchenAbvGr']][all_data['KitchenQual'].isnull() == True])
+# print(pd.crosstab(all_data.KitchenQual, all_data.KitchenAbvGr))
+cat_imputation(all_data, 'KitchenQual', 'TA') # Gd
+
 
 # Functional test
 # 填充一个最常见的值
-# cat_exploration(test_data, 'Functional')
-cat_imputation(test_data, 'Functional', 'Typ')
+# cat_null_sum('Functional')
+# cat_frequency(all_data, 'Functional')
+cat_imputation(all_data, 'Functional', 'Typ')
 
-# FireplaceQu & Fireplaces train & test
-# cat_exploration(test_data, 'FireplaceQu')
-# cat_exploration(train_data, 'FireplaceQu')
-cat_imputation(test_data, 'FireplaceQu', 'None')
-cat_imputation(train_data, 'FireplaceQu', 'None')
+
+# FireplaceQu train & test
+# cat_null_sum('Fireplaces')
+# cat_frequency(all_data, 'FireplaceQu')
+# print(pd.crosstab(all_data.Fireplaces, all_data.FireplaceQu))
+cat_imputation(all_data, 'FireplaceQu', 'None')
+cat_imputation(all_data, 'FireplaceQu', 'None')
+
 
 # Garage train & test
 # train
 garage_cols = ['GarageType', 'GarageQual', 'GarageCond', 'GarageYrBlt', 'GarageFinish', 'GarageCars', 'GarageArea']
-# print(train_data[garage_cols][train_data['GarageType'].isnull() == True])
+# cat_null_sum('GarageType') 157
+# cat_null_sum('GarageQual') 159
+# cat_null_sum('GarageCond') 159
+# cat_null_sum('GarageYrBlt') 159
+# cat_null_sum('GarageFinish') 159
+# cat_null_sum('GarageCars') 1
+# cat_null_sum('GarageArea') 1
+# print(all_data[garage_cols][all_data['GarageQual'].isnull() == True])
 for cols in garage_cols:
     if train_data[cols].dtype == np.object:
         cat_imputation(train_data, cols, 'None')
     else:
         cat_imputation(train_data, cols, 0)
-
+print()
 # test set
 garage_cols = ['GarageType', 'GarageQual', 'GarageCond', 'GarageYrBlt', 'GarageFinish', 'GarageCars', 'GarageArea']
 # print(test_data[garage_cols][test_data['GarageType'].isnull() == True])
@@ -292,8 +362,8 @@ test_data = test_data.drop(['PoolArea'], axis=1)
 train_data = train_data.drop(['PoolArea'], axis=1)
 
 # Fence train & test
-# cat_exploration(test_data, 'Fence')
-# cat_exploration(train_data, 'Fence')
+# cat_frequency(test_data, 'Fence')
+# cat_frequency(train_data, 'Fence')
 cat_imputation(test_data, 'Fence', 'None')
 cat_imputation(train_data, 'Fence', 'None')
 
@@ -302,11 +372,11 @@ cat_imputation(test_data, 'MiscFeature', 'None')
 cat_imputation(train_data, 'MiscFeature', 'None')
 
 # SaleType test
-# cat_exploration(test_data, 'SaleType')
+# cat_frequency(test_data, 'SaleType')
 cat_imputation(test_data, 'SaleType', 'WD')
 
 # Electrical train
-# cat_exploration(train_data, 'Electrical')
+# cat_frequency(train_data, 'Electrical')
 cat_imputation(train_data, 'Electrical', 'SBrkr')
 
 train_data.isnull().sum().max()
