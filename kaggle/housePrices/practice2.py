@@ -506,7 +506,7 @@ plt.xlabel("alpha")
 plt.ylabel("rmse")
 
 model_lasso = LassoCV(alphas = [0.0007]).fit(train_x[imp.head(cols)['feature']], train_y)
-rmse_cv(model_lasso).mean()
+rmse_cv(model_lasso).min()
 
 coef = pd.Series(model_lasso.coef_, index = train_x.columns)
 print("Lasso picked " + str(sum(coef != 0)) + " variables and eliminated the other " +  str(sum(coef == 0)) + " variables")

@@ -23,6 +23,7 @@ warnings.filterwarnings('ignore')
 train_data = pd.read_csv('kaggle/housePrices/dataset/train.csv')
 test_data = pd.read_csv('kaggle/housePrices/dataset/test.csv')
 all_data = pd.concat((train_data[test_data.columns], test_data))
+
 # data exploration and data processing
 def get_missing_cols(data, col):
     # all_data.isnull().sum().order(ascending = False)
@@ -398,6 +399,17 @@ cat_imputation(all_data, 'Electrical', 'SBrkr')
 all_data.isnull().sum().max()
 
 
+# 调整数据的格式，可能因为all_data使用了concat的缘故，导致了许多原本整型或浮点型的数据格式变成了Object类型，需要跟train做比较
+train_data_cols = train_data.columns
+all_data_cols = all_data.columns
+for col in all_data_cols:
+    if col in train_data_cols:
+            tmp_col = all_data[col].astype(train_data[col].dtype)
+            tmp_col = pd.DataFrame({col: tmp_col})
+            del all_data[col]
+            all_data = pd.concat((all_data, tmp_col), axis=1)
+
+
 # 到此为止，我们基本把所有的缺失值都填补完整了，但是还有一列MSSubClass，原始数据类型是int64,我并不认为这一列具有可比性，所以把MSSubClass映射成object
 # convert MSSubClass to object
 all_data = all_data.replace({"MSSubClass": {20: "A", 30: "B", 40: "C", 45: "D", 50: "E",
@@ -456,7 +468,8 @@ train_y = np.log1p(train_data['SalePrice'])
 test_id = test_data['Id'].astype(pd.np.int64)
 cols = 120
 
-# pd.DataFrame(train_x.columns).to_csv("kaggle/housePrices/temp/columns.csv", index=False)/
+# pd.DataFrame(train_x.columns).to_csv("kaggle/housePrices/temp/columns.csv", index=False)
+
 
 
 # 进行one-hot编码后，会出现一种情况就是：某个特征的某一个取值只出现在训练集中，没有出现在测试集中，或者相反，这个时候需要特征对齐
@@ -587,7 +600,7 @@ plt.xlabel("alpha")
 plt.ylabel("rmse")
 
 model_lasso = LassoCV(alphas = [0.0005, 0.001, 0.01, 1, 5]).fit(train_x[imp.head(cols)['feature']], train_y)
-rmse_cv(model_lasso).mean()
+rmse_cv(model_lasso).min()
 
 coef = pd.Series(model_lasso.coef_, index = train_x.columns)
 print("Lasso picked " + str(sum(coef != 0)) + " variables and eliminated the other " +  str(sum(coef == 0)) + " variables")
