@@ -105,7 +105,10 @@ def violinplot(column):
 def scatter(column1, column2):
     plt.figure()
     if type(column1) == str:
-        plt.scatter(all_data[column1], all_data[column2])
+        if column1 not in all_data.columns or column2 not in all_data.columns:
+            plt.scatter(train_data[column1], train_data[column2])
+        else:
+            plt.scatter(all_data[column1], all_data[column2])
     else:
         plt.scatter(column1, column2)
 
@@ -170,6 +173,16 @@ def heatmap(columns):
 # all_data[all_data['MSSubClass'] > 120]['MSSubClass'] = all_data['MSSubClass'].mean() # wrong code
 # all_data['MSSubClass'].mean() #57.1377183967112,so use 60
 # all_data.loc[all_data['MSSubClass'] > 120, 'MSSubClass'] = 60
+# 值得记住，因为MSSubClass原始的数字没有意义，所以需要转换为字符类型，但考虑到种类太多，所以又可以合并一些种类，依照
+# 的SalePrice均值来分类
+# print(train_data[['MSSubClass', 'SalePrice']].groupby('MSSubClass').mean().sort_values(by = 'SalePrice'))
+all_data = all_data.replace({"MSSubClass": {30: "A", 180: "A", 45: "A",
+                                            190: "B", 90: "B", 160: "B",
+                                            50: "C", 85: "C",
+                                            40: "D", 70: "D", 80: "D",
+                                            20: "E", 75: "E",
+                                            120: "F", 60: "F",
+                                            150: "E"}})# 考虑到没出现在train中，且在test中只出现一次，故取频率最高的20
 
 
 # MSZoning test，使用了交叉表，里面有三个比较模拟两可的值，需要在模型优化时再重新设置一下，看哪一个妥当
@@ -189,8 +202,10 @@ all_data.loc[all_data['Id'] == 2251, 'MSZoning'] = 'RM'# RL
 # train_data['LotFrontage'].corr(np.sqrt(train_data['LotArea']))
 # train_data.LotFrontage[train_data['LotFrontage'].isnull()] = np.sqrt(train_data.LotArea[train_data['LotFrontage'].isnull()])
 # test_data.LotFrontage[test_data['LotFrontage'].isnull()] = np.sqrt(test_data.LotArea[test_data['LotFrontage'].isnull()])
-# 486个空值，不过，重要性排名竟然得第一，怎麼搞的？暂时delete
+# 486个空值，不过，重要性排名竟然得第一，怎麼搞的？暂时delete，事实证明drop比保留更好
 all_data = all_data.drop(['LotFrontage'], axis=1)
+# all_data.LotFrontage[all_data['LotFrontage'].isnull()] = np.sqrt(all_data.LotArea[all_data['LotFrontage'].isnull()])
+
 
 # Alley train & test
 # print(all_data['Alley'].isnull().sum())
@@ -200,6 +215,7 @@ all_data = all_data.drop(['LotFrontage'], axis=1)
 # cat_imputation(test_data, 'Alley', 'None')
 # cat_imputation(train_data, 'Alley', 'None')
 all_data = all_data.drop(['Alley'], axis=1)
+
 
 # Utilities test
 # 并且这个column中值得分布极为不均匀，drop
@@ -245,7 +261,6 @@ cat_imputation(all_data, 'MasVnrArea', 0.0)
 basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2', 'BsmtFinSF1', 'BsmtFinSF2']
 # print(train_data['BsmtQual'].isnull().sum())
 # print(train_data[basement_cols][train_data['BsmtExposure'].isnull() == True])
-# print(train_data[basement_cols][train_data['BsmtFinType2'].isnull() == True])
 # print(pd.crosstab(all_data.BsmtQual, all_data.BsmtExposure))
 # cat_frequency(all_data, 'BsmtExposure')
 # BsmtExposure和BsmtFinType2一共38个空值并有2个不一致，其他37个空值，且一致
@@ -253,17 +268,15 @@ basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', '
 # d1 = all_data[all_data['BsmtFinSF1'] < 1200]
 # cat_frequency(d1, 'BsmtExposure')
 all_data.loc[all_data['Id'] == 949, 'BsmtExposure'] = 'No'
+# print(train_data[basement_cols][train_data['BsmtFinType2'].isnull() == True])
 # d1 = all_data[all_data['BsmtFinSF2'] > 450]
 # d1 = d1[d1['BsmtFinSF2'] < 500]
 # cat_frequency(d1, 'BsmtFinType2')
 all_data.loc[all_data['Id'] == 333, 'BsmtFinType2'] = 'Rec' # LwQ/BLQ/LwQ
-# for cols in basement_cols:
-#     if 'FinFS' not in cols:
-#         cat_imputation(all_data, cols, 'None')
+
 
 # test
 basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF']
-# print(test_data['BsmtQual'].isnull().sum())
 # print(test_data['BsmtQual'].isnull().sum())
 # 其中,有两行有BsmtQual为NaN,该两行的其他列都有值
 # print(test_data[basement_cols][test_data['BsmtQual'].isnull() == True])
@@ -338,8 +351,12 @@ all_data[garage_cols][all_data['GarageFinish'].isnull() == True].to_csv("kaggle/
 # print(pd.crosstab(all_data.GarageQual, all_data.GarageCond))
 all_data.loc[all_data['Id'] == 2127, 'GarageQual'] = 'TA'
 all_data.loc[all_data['Id'] == 2127, 'GarageCond'] = 'TA' # max
-all_data.loc[all_data['Id'] == 2127, 'GarageYrBlt'] = 1978 # mean
-all_data.loc[all_data['Id'] == 2127, 'GarageFinish'] = 'Fin' # 因为是1978年，所以是Finished
+# 算出YearBuilt和GarageYrBlt的关系
+YearBuilt_GarageYrBlt = all_data[['YearBuilt', 'GarageYrBlt']][all_data['GarageYrBlt'].isnull() == False]
+YearBuilt_GarageYrBlt_sum = np.sum(YearBuilt_GarageYrBlt)
+YearBuilt_GarageYrBlt_subtract = np.round((YearBuilt_GarageYrBlt_sum[0] - YearBuilt_GarageYrBlt_sum[1]) / len(YearBuilt_GarageYrBlt))
+all_data.loc[all_data['Id'] == 2127, 'GarageYrBlt'] = all_data.loc[all_data['Id'] == 2127, 'YearBuilt'] -  YearBuilt_GarageYrBlt_subtract
+all_data.loc[all_data['Id'] == 2127, 'GarageFinish'] = 'Fin' # 因为是1915年，所以是Finished
 # 因为Id=2577只有GarageType为Detchd，其他列没有值，所干脆把GarageType置为空
 all_data.loc[all_data['Id'] == 2577, 'GarageType'] = 'None'
 # cat_null_sum('GarageCond') 159
@@ -412,9 +429,20 @@ for col in all_data_cols:
 
 # 到此为止，我们基本把所有的缺失值都填补完整了，但是还有一列MSSubClass，原始数据类型是int64,我并不认为这一列具有可比性，所以把MSSubClass映射成object
 # convert MSSubClass to object
-all_data = all_data.replace({"MSSubClass": {20: "A", 30: "B", 40: "C", 45: "D", 50: "E",
-                                                60: "F", 70: "G", 75: "H", 80: "I", 85: "J",
-                                                90: "K", 120: "L", 150: "M", 160: "N", 180: "O", 190: "P"}})
+# all_data = all_data.replace({"MSSubClass": {20: "A", 30: "B", 40: "C", 45: "D", 50: "E",
+#                                                 60: "F", 70: "G", 75: "H", 80: "I", 85: "J",
+#                                                 90: "K", 120: "L", 150: "M", 160: "N", 180: "O", 190: "P"}})
+
+all_data = all_data.replace({"ExterQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
+all_data = all_data.replace({"ExterCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
+all_data = all_data.replace({"BsmtQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
+all_data = all_data.replace({"BsmtCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
+all_data = all_data.replace({"BsmtExposure": {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "None": 0}})
+all_data = all_data.replace({"BsmtFinType1": {"GLQ": 5, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "None": 0}})
+all_data = all_data.replace({"BsmtFinType2": {"GLQ": 5, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "None": 0}})
+all_data = all_data.replace({"GarageQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
+all_data = all_data.replace({"GarageCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
+all_data = all_data.replace({"GarageFinish": {"Fin": 3, "RFn": 2, "Unf": 1, "None": 0}})
 
 
 # 将所有categorical类型的特征进行one-hot编码。需要注意的是：训练集和测试集中，相同的列可能会有不同的类型需要统一
@@ -466,7 +494,7 @@ test_x = all_data[all_data['Id'] > 1460]
 all_data = all_data.drop(['Id'], axis=1)
 train_y = np.log1p(train_data['SalePrice'])
 test_id = test_data['Id'].astype(pd.np.int64)
-cols = 120
+cols = 291
 
 # pd.DataFrame(train_x.columns).to_csv("kaggle/housePrices/temp/columns.csv", index=False)
 
@@ -581,6 +609,7 @@ def rmse_cv(model):
 # “neg_mean_squared_error”是将预测的relevance的值和实际的relevance的值进行均方误差，即第二步中的MSE的公式。但是用corss_val_score返回的score是负数值，需要加负号再开根号
     rmse= np.sqrt(-cross_val_score(model, train_x[imp.head(cols)['feature']], train_y, scoring="neg_mean_squared_error", cv = 5))    # neg_mean_squared_error: 计算均方误差
     return(rmse)
+
 # RidgeCV
 # min during 12.2 - 12.4
 # alphas = [0.05, 0.1, 0.3, 1, 3, 5, 10, 15, 30, 50, 75]
@@ -591,16 +620,17 @@ cv_ridge.plot(title = "Validation")
 plt.xlabel("alpha")
 plt.ylabel("rmse")
 
-# 0.0007
-alphas = [0.0005, 0.001, 0.01, 1, 5, 10]
+# 0.0004
+alphas = [110, 120, 130, 140, 150, 160, 170, 180, 190]
 cv_lasso = [rmse_cv(Lasso(alpha = alpha)).mean() for alpha in alphas]
 cv_lasso = pd.Series(cv_lasso, index = alphas)
 cv_lasso.plot(title = "Validation")
 plt.xlabel("alpha")
 plt.ylabel("rmse")
 
-model_lasso = LassoCV(alphas = [0.0005, 0.001, 0.01, 1, 5]).fit(train_x[imp.head(cols)['feature']], train_y)
-rmse_cv(model_lasso).min()
+# 0.0004
+model_lasso = LassoCV(alphas = [0.0004]).fit(train_x, train_y)
+rmse_cv(model_lasso).mean()
 
 coef = pd.Series(model_lasso.coef_, index = train_x.columns)
 print("Lasso picked " + str(sum(coef != 0)) + " variables and eliminated the other " +  str(sum(coef == 0)) + " variables")
@@ -621,13 +651,14 @@ preds.plot(x = "preds", y = "residuals", kind = "scatter")
 import xgboost as xgb
 
 # train_x[imp.head(293)['feature']]
-dtrain = xgb.DMatrix(train_x[coef.index], label = train_y)
+# train_x[coef.index]
+dtrain = xgb.DMatrix(train_x, label = train_y)
 # dtest = xgb.DMatrix(test_x[imp.head(cols)['feature']])
 
 params = {
-    "max_depth": 2,
-    "eta": 0.08,
-    "min_child_weight": 1,
+    "max_depth": 5,
+    "eta": 0.1,
+    "min_child_weight": 4,
     "gamma": 0,
     "objective": "reg:linear",
     "subsample": 0.8,
@@ -638,10 +669,10 @@ print(model['test-rmse-mean'].min())
 print(model['train-rmse-mean'].min())
 
 model_xgb = xgb.XGBRegressor(
-    n_estimators=410,
-    learning_rate=0.08,
-    max_depth=2,
-    min_child_weight=3,
+    n_estimators=500,
+    learning_rate=0.1,
+    max_depth=5,
+    min_child_weight=4,
     gamma=0,
     subsample=0.8,
     colsample_bytree=0.8,
@@ -649,17 +680,23 @@ model_xgb = xgb.XGBRegressor(
     nthread=4,
     scale_pos_weight=1,
     seed=27) #the params were tuned using xgb.cv
-model_xgb.fit(train_x[imp.head(cols)['feature']], train_y)
+model_xgb.fit(train_x, train_y)
 
-xgb_preds = np.expm1(model_xgb.predict(test_x[imp.head(cols)['feature']]))
-lasso_preds = np.expm1(model_lasso.predict(test_x[imp.head(cols)['feature']]))
+xgb_preds = np.expm1(model_xgb.predict(test_x))
+lasso_preds = np.expm1(model_lasso.predict(test_x))
 
-predictions = pd.DataFrame({"xgb":xgb_preds, "lasso":lasso_preds})
+lasso_xgb_preds = 0.7 * lasso_preds + 0.3 * xgb_preds
+predictions = pd.DataFrame({"xgb":lasso_xgb_preds, "lasso":lasso_preds})
 predictions.plot(x = "xgb", y = "lasso", kind = "scatter")
 
-preds = 0.7*lasso_preds + 0.3*xgb_preds
-solution = pd.DataFrame({"Id": test_id, "SalePrice":preds})
-solution.to_csv("kaggle/housePrices/temp/ridge_sol.csv", index = False)
+preds = 0.7 * lasso_preds + 0.3 * xgb_preds
+solution = pd.DataFrame({"Id": test_id, "SalePrice": preds})
+solution.to_csv("kaggle/housePrices/temp/lasso_xgb_test_result.csv", index=False)
+
+lasso_preds = model_lasso.predict(test_x[imp.head(cols)['feature']])
+result = pd.DataFrame({"Id": test_id, "SalePrice": lasso_preds})
+result.to_csv("kaggle/housePrices/temp/lasso_test_result.csv", index=False)
+
 
 # 1.Get More Data 2.Invent More Data 3.Clean Your Data 4.Resample Data 5.Reframe Your Problem 6.Rescale Your Data 7.Transform Your Data 8.Project Your Data 9.Feature Selection 10.Feature Engineering
 # 1.Resampling Method 2.Evaluation Metric 3.Baseline Performance 4.Spot Check Linear Algorithms 5.Spot Check Nonlinear Algorithms 6.Steal from Literature 7.Standard Configurations
@@ -713,17 +750,17 @@ def modelfit(alg, train_x, train_y,useTrainCV=False, cv_folds=5, early_stopping_
     # feat_imp.head(50).plot(kind='bar', title='Feature Importances')
     # plt.ylabel('Feature Importance Score')
 
-    # dtest_predictions = alg.predict(test_x[imp.head(293)['feature']])
-    # dtest_predictions = np.expm1(dtest_predictions)
-    # test_result = pd.DataFrame({"Id": test_id, "SalePrice": dtest_predictions})
-    # test_result.to_csv("kaggle/housePrices/temp/xgb_test_result.csv", index=False)
+    dtest_predictions = alg.predict(test_x)
+    dtest_predictions = np.expm1(dtest_predictions)
+    test_result = pd.DataFrame({"Id": test_id, "SalePrice": dtest_predictions})
+    test_result.to_csv("kaggle/housePrices/temp/xgb_test_result.csv", index=False)
 
 # Choose all predictors except target & IDcols
 xgb1 = XGBRegressor(
-    n_estimators=1000,
-    learning_rate=0.08,
-    max_depth=2,
-    min_child_weight=1,
+    n_estimators=500,
+    learning_rate=0.1,
+    max_depth=5,
+    min_child_weight=4,
     gamma=0,
     subsample=0.8,
     colsample_bytree=0.8,
@@ -740,10 +777,10 @@ modelfit(xgb1, train_x, train_y)
 
 # {'max_depth': 2, 'min_child_weight': 3},
 # -0.015092031338683542)
-# param_test1 = {
-#  'max_depth': [2, 3, 4, 5],
-#  'min_child_weight': [1, 2, 3, 4]
-# }
+param_test1 = {
+ 'max_depth': [2, 3, 4, 5, 6, 7],
+ 'min_child_weight': [1, 2, 3, 4, 5, 6]
+}
 
 # {'n_estimators': 410},
 #  -0.015797678676584055)
@@ -772,14 +809,14 @@ modelfit(xgb1, train_x, train_y)
 
  # {'reg_alpha': 0.1},
  # -0.014945822756303013)
-param_test1 = {
- 'reg_alpha':[0.05, 0.06,  0.07,  0.08,  0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]
-}
+# param_test1 = {
+#  'reg_alpha':[0.05, 0.06,  0.07,  0.08,  0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]
+# }
 
 gsearch1 = GridSearchCV(
     estimator = XGBRegressor(
-        n_estimators=1000,
-        learning_rate=0.08,
+        n_estimators=500,
+        learning_rate=0.1,
         max_depth=2,
         min_child_weight=3,
         gamma=0,
@@ -794,7 +831,7 @@ gsearch1 = GridSearchCV(
     n_jobs=4,
     iid=False,
     cv=5)
-gsearch1.fit(train_x[imp.head(120)['feature']], train_y)
+gsearch1.fit(train_x, train_y)
 gsearch1.grid_scores_, gsearch1.best_params_, gsearch1.best_score_
 
 # 0.12831
