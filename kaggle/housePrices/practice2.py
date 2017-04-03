@@ -358,14 +358,14 @@ train_y = train_data['SalePrice']
 train_y = np.log1p(train_y)
 
 #log transform skewed numeric features:
-# from scipy.stats import skew
-# numeric_feats = train_data.dtypes[train_data.dtypes != "object"].index
-# skewed_feats = train_data[numeric_feats].apply(lambda x: skew(x.dropna())) #Computes the skewness of a data set.
-# skewed_feats = skewed_feats[skewed_feats > 0.75]
-# skewed_feats = skewed_feats.index
-# skewed_feats = skewed_feats.drop('SalePrice')
-# train_data[skewed_feats] = np.log1p(train_data[skewed_feats])
-# test_data[skewed_feats] = np.log1p(test_data[skewed_feats])
+from scipy.stats import skew
+numeric_feats = train_data.dtypes[train_data.dtypes != "object"].index
+skewed_feats = train_data[numeric_feats].apply(lambda x: skew(x.dropna())) #Computes the skewness of a data set.
+skewed_feats = skewed_feats[skewed_feats > 0.75]
+skewed_feats = skewed_feats.index
+skewed_feats = skewed_feats.drop('SalePrice')
+train_data[skewed_feats] = np.log1p(train_data[skewed_feats])
+test_data[skewed_feats] = np.log1p(test_data[skewed_feats])
 
 # dummy
 train_data = pd.get_dummies(train_data)
@@ -394,7 +394,7 @@ test_x = test_x[train_x.columns]
 cols = 293
 
 # 数据标准化
-scaler = preprocessing.scale(train_x)
+# scaler = preprocessing.scale(train_x)
 # StandardScaler().fit_transform(train_x)
 
 
@@ -506,7 +506,7 @@ plt.xlabel("alpha")
 plt.ylabel("rmse")
 
 model_lasso = LassoCV(alphas = [0.0007]).fit(train_x[imp.head(cols)['feature']], train_y)
-rmse_cv(model_lasso).min()
+rmse_cv(model_lasso).mean()
 
 coef = pd.Series(model_lasso.coef_, index = train_x.columns)
 print("Lasso picked " + str(sum(coef != 0)) + " variables and eliminated the other " +  str(sum(coef == 0)) + " variables")
@@ -637,7 +637,7 @@ xgb1 = XGBRegressor(
     # scale_pos_weight=1,
     # seed=27,
     nthread=4)
-modelfit(xgb1, scaler, train_y)
+modelfit(xgb1, train_x, train_y)
 
 # max_features
 # for i in np.arange(10):

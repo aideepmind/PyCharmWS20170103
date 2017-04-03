@@ -3,15 +3,19 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import norm
+from boto.s3 import prefix
 from scipy import stats
+from scipy.stats import norm
+from scipy.stats import mode
 import sklearn.preprocessing as preprocessing
 from sklearn.preprocessing import StandardScaler
 from  sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import Lasso
+from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.grid_search import GridSearchCV
+from sklearn.cluster import KMeans
 import warnings
 import xgboost
 from subprocess import check_output
@@ -214,6 +218,10 @@ all_data = all_data.drop(['LotFrontage'], axis=1)
 # Alley这个特征有太多的nans,这里填充None，也可以直接删除，不使用。后面在根据特征的重要性选择特征是，也可以舍去
 # cat_imputation(test_data, 'Alley', 'None')
 # cat_imputation(train_data, 'Alley', 'None')
+bool_ = all_data['Alley'].isnull()
+bool_ = pd.DataFrame({'HasAlley': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
 all_data = all_data.drop(['Alley'], axis=1)
 
 
@@ -227,6 +235,7 @@ all_data = all_data.drop(['Alley'], axis=1)
 # train_data = train_data.drop(['Utilities'], axis=1)
 all_data = all_data.drop(['Utilities'], axis=1)
 
+
 # Exterior1st & Exterior2nd test，这里采用交叉表，但是结果并不理想，因为几个值都很接近暂时采取频率最高的
 # 检查Exterior1st 和 Exterior2nd 是否存在缺失值共现的情况
 # print(all_data['Exterior1st'].isnull().sum())
@@ -237,6 +246,7 @@ all_data = all_data.drop(['Utilities'], axis=1)
 # print(pd.crosstab(all_data.Exterior1st, all_data.ExterQual))
 all_data.loc[all_data['Exterior1st'].isnull(), 'Exterior1st'] = 'HdBoard'# HdBoard/MetalSd/VinylSd/Wd Sdng/Plywood
 all_data.loc[all_data['Exterior2nd'].isnull(), 'Exterior2nd'] = 'HdBoard'# HdBoard/MetalSd/VinylSd/Wd Sdng/Plywood
+
 
 # MasVnrType & MasVnrArea train & test
 # print(all_data['MasVnrType'].isnull().sum())
@@ -255,6 +265,7 @@ all_data.loc[all_data['Exterior2nd'].isnull(), 'Exterior2nd'] = 'HdBoard'# HdBoa
 all_data.loc[all_data['Id'] == 2611, 'MasVnrType'] = 'BrkFace'    # Stone
 cat_imputation(all_data, 'MasVnrType', 'None')
 cat_imputation(all_data, 'MasVnrArea', 0.0)
+
 
 # basement train & test
 # train
@@ -382,10 +393,10 @@ for cols in garage_cols:
 # cat_null_sum('PoolQC')
 # print(all_data['PoolQC'][all_data['PoolQC'].isnull() == False])
 # 只有10个大于0的值，drop
-all_data = all_data.drop(['PoolQC'], axis=1)
+# all_data = all_data.drop(['PoolQC'], axis=1)
 # cat_null_sum('PoolArea')
 # 只有13个大于0的值，drop
-all_data = all_data.drop(['PoolArea'], axis=1)
+# all_data = all_data.drop(['PoolArea'], axis=1)
 
 
 # Fence train & test
@@ -416,17 +427,6 @@ cat_imputation(all_data, 'Electrical', 'SBrkr')
 all_data.isnull().sum().max()
 
 
-# 调整数据的格式，可能因为all_data使用了concat的缘故，导致了许多原本整型或浮点型的数据格式变成了Object类型，需要跟train做比较
-train_data_cols = train_data.columns
-all_data_cols = all_data.columns
-for col in all_data_cols:
-    if col in train_data_cols:
-            tmp_col = all_data[col].astype(train_data[col].dtype)
-            tmp_col = pd.DataFrame({col: tmp_col})
-            del all_data[col]
-            all_data = pd.concat((all_data, tmp_col), axis=1)
-
-
 # 到此为止，我们基本把所有的缺失值都填补完整了，但是还有一列MSSubClass，原始数据类型是int64,我并不认为这一列具有可比性，所以把MSSubClass映射成object
 # convert MSSubClass to object
 # all_data = all_data.replace({"MSSubClass": {20: "A", 30: "B", 40: "C", 45: "D", 50: "E",
@@ -435,6 +435,9 @@ for col in all_data_cols:
 
 all_data = all_data.replace({"ExterQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
 all_data = all_data.replace({"ExterCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
+all_data = all_data.replace({"HeatingQC": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
+all_data = all_data.replace({"KitchenQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
+all_data = all_data.replace({"FireplaceQu": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
 all_data = all_data.replace({"BsmtQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
 all_data = all_data.replace({"BsmtCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
 all_data = all_data.replace({"BsmtExposure": {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "None": 0}})
@@ -443,7 +446,176 @@ all_data = all_data.replace({"BsmtFinType2": {"GLQ": 5, "ALQ": 5, "BLQ": 4, "Rec
 all_data = all_data.replace({"GarageQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
 all_data = all_data.replace({"GarageCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
 all_data = all_data.replace({"GarageFinish": {"Fin": 3, "RFn": 2, "Unf": 1, "None": 0}})
+all_data = all_data.replace({"PavedDrive": {"Y": 3, "P": 2, "N": 1}})
+all_data = all_data.replace({"Fence": {"GdPrv": 4, "MnPrv": 3, "GdWo": 2, "MnWw": 1, "None": 0}})
 
+
+# Neighborhood 通过K-Means来分类
+# 根据地址借助外部工具（www.addressreport.com）收集一些新的数据（Location,Cost_of_living,Income,Owners,Annual_property_tax,School,Crime,Ville）
+ngbr_details = pd.read_csv('kaggle/housePrices/dataset/neighborhood_details.csv')
+ngbr_details = ngbr_details.drop('Neighborhood_etiquette', axis=1)
+# 使用均值填充，但字符类型无法填充所以使用众数来填充
+ngbr_details = ngbr_details.fillna(ngbr_details.mean())
+# mode返回众数值和对应次数（只能是数字类型）
+# ngbr_details['Location'].fillna(mode(ngbr_details['Location']).mode[0], inplace=True)
+ngbr_details['Location'].fillna("NN", inplace=True)
+# Location的one-hot
+ngbr_details = pd.concat((ngbr_details, pd.get_dummies(ngbr_details['Location'], prefix='Location')), axis=1)
+ngbr_details = ngbr_details.drop('Location', axis = 1)
+# 合并 pd.merge
+all_data = pd.merge(all_data, ngbr_details, how='left', on='Neighborhood', sort=False)
+# 按Neighborhood分组
+grouped = train_data[['Neighborhood', 'SalePrice']].groupby('Neighborhood')
+temp = pd.concat((grouped.mean().rename(columns = {'SalePrice':'meanSalePrice'}), grouped.median().rename(columns = {'SalePrice':'medSalePrice'})), axis=1)
+temp = pd.concat((temp, grouped.std().rename(columns = {'SalePrice':'stdSalePrice'})), axis=1)
+temp = pd.concat((temp, grouped.count().rename(columns = {'SalePrice':'countSalePrice'})), axis=1)
+# K-Means聚类
+km = KMeans(n_clusters=10).fit_predict(temp)
+temp = pd.DataFrame({'Neighborhood': temp.index, 'NeighborhoodCl': km})
+all_data = pd.merge(all_data, temp, how='left', on='Neighborhood', sort=False)
+for cls in np.arange(10):
+    bool_ = all_data['NeighborhoodCl'] == cls
+    bool_ = pd.DataFrame({'Neighborhood' + str(cls): bool_}, index=bool_.index)
+    bool_ = bool_.astype(pd.np.float64)
+    all_data = pd.concat((all_data, bool_), axis=1)
+all_data = all_data.drop('Neighborhood', axis=1)
+all_data = all_data.drop('NeighborhoodCl', axis=1)
+
+
+# Condition1  & Condition2
+# print((all_data['Condition1'] != all_data['Condition2']).value_counts())
+# print(all_data[all_data['Condition1'] != all_data['Condition2']][['Condition1', 'Condition2']])
+# 交通条件，有Condition1和Condition2，如果Condition1=Condition2，则只有一个，否则是拥有两个不一样的条件
+col_values = ['Artery', 'Feedr', 'Norm', 'RRNn', 'RRAn', 'PosN', 'PosA', 'RRNe', 'RRAe']
+for index in np.arange(len(col_values)):
+    bool_ = (all_data['Condition1'] == col_values[index]) | (all_data['Condition2'] == col_values[index])
+    bool_ = pd.DataFrame({'Condition_' + col_values[index]: bool_}, index=bool_.index)
+    bool_ = bool_.astype(pd.np.float64)
+    all_data = pd.concat((all_data, bool_), axis=1)
+bool_ = all_data['Condition1'] != all_data['Condition2']
+bool_ = pd.DataFrame({'Condition_Has_Two': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+all_data = all_data.drop('Condition1', axis=1)
+all_data = all_data.drop('Condition2', axis=1)
+
+
+# YearBuilt & YearRemodAdd
+# displot('YearRemodAdd')
+# displot('YearRemodAdd')
+# scatter('YearRemodAdd', 'YearBuilt')
+# all_data[['YearBuilt', 'YearRemodAdd']][all_data['YearBuilt'] > all_data['YearRemodAdd']]
+# 从数据中可以看出YearRemodAdd在1950年之前的数据没有，所以需要利用与YearBuilt的线性关系预测其1950年数据
+regr = LinearRegression()
+year_after_1950 = all_data[['YearBuilt', 'YearRemodAdd']][all_data['YearBuilt'] > 1950]
+year_before_1950 = all_data[['YearBuilt']][all_data['YearRemodAdd'] <= 1950]
+# series不能转置，故year_after_1950['YearBuilt'].T无效，需转换成DataFrame
+regr.fit(year_after_1950['YearBuilt'].to_frame(), year_after_1950['YearRemodAdd'])
+year_before_1950_preds = np.round(regr.predict(year_before_1950))
+all_data.loc[all_data['YearRemodAdd'] <= 1950, 'YearRemodAdd'] = year_before_1950_preds
+bool_ = all_data['YearBuilt'] != all_data['YearRemodAdd']
+bool_ = pd.DataFrame({'isRemod': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+
+#Fireplaces
+bool_ = all_data['Fireplaces'] > 0
+bool_ = pd.DataFrame({'HasFireplaces': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+# all_data = all_data.drop('Fireplaces', axis=1)
+
+
+#WoodDeckSF
+bool_ = all_data['WoodDeckSF'] > 0
+bool_ = pd.DataFrame({'HasWoodDeckSF': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+
+#OpenPorchSF
+bool_ = all_data['OpenPorchSF'] > 0
+bool_ = pd.DataFrame({'HasOpenPorchSF': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+
+#EnclosedPorch
+bool_ = all_data['EnclosedPorch'] > 0
+bool_ = pd.DataFrame({'HasEnclosedPorch': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+
+#3SsnPorch
+bool_ = all_data['3SsnPorch'] > 0
+bool_ = pd.DataFrame({'Has3SsnPorch': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+
+# ScreenPorch
+bool_ = all_data['ScreenPorch'] > 0
+bool_ = pd.DataFrame({'HasScreenPorch': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+
+# PoolArea 描述是否有的问题
+bool_ = all_data['PoolArea'] > 0
+bool_ = pd.DataFrame({'HasPoolArea': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+
+# PoolQC 描述质量问题
+bool_ = (all_data['PoolQC'] == 'Ex') | (all_data['PoolQC'] == 'Gd')
+bool_ = pd.DataFrame({'PoolQCExOrGd': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+all_data = all_data.drop('PoolQC', axis=1)
+
+
+# Fence
+bool_ = all_data['Fence'] != 0
+bool_ = pd.DataFrame({'HasFence': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+
+# MiscFeature
+bool_ = all_data['MiscFeature'] == 'Gar2'
+bool_ = pd.DataFrame({'MiscFeature_Gar2': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+bool_ = all_data['MiscFeature'] == 'Shed'
+bool_ = pd.DataFrame({'MiscFeature_Shed': bool_}, index=bool_.index)
+bool_ = bool_.astype(pd.np.float64)
+all_data = pd.concat((all_data, bool_), axis=1)
+
+
+# YrSold
+all_data['YrSold'] = all_data['YrSold'] - 2005
+all_data.YearBetweenSoldAndBuilt = all_data['YrSold'] - all_data['YearBuilt']
+
+
+
+# 调整数据的格式，可能因为all_data使用了concat的缘故，导致了许多原本整型或浮点型的数据格式变成了Object类型，需要跟train做比较
+train_data_cols = train_data.columns
+all_data_cols = all_data.columns
+for col in all_data_cols:
+    if col in train_data_cols and all_data[col].dtype != train_data[col].dtype and train_data[col].dtype != object and col != 'MSSubClass':
+        # print(col)
+        tmp_col = all_data[col].astype(train_data[col].dtype)
+        tmp_col = pd.DataFrame({col: tmp_col})
+        del all_data[col]
+        all_data = pd.concat((all_data, tmp_col), axis=1)
+
+
+# all_data.to_csv("kaggle/housePrices/temp/all_data.csv", index=False)
 
 # 将所有categorical类型的特征进行one-hot编码。需要注意的是：训练集和测试集中，相同的列可能会有不同的类型需要统一
 # for col in test_data.columns:
@@ -481,20 +653,37 @@ all_data = all_data.replace({"GarageFinish": {"Fin": 3, "RFn": 2, "Unf": 1, "Non
 
 # log transform skewed numeric features:
 from scipy.stats import skew
+# numeric_feats = all_data.dtypes[all_data.dtypes != "object"].index
+# skewed_feats = all_data[numeric_feats].apply(lambda x: skew(x.dropna())) #Computes the skewness of a data set.
+# skewed_feats = skewed_feats[skewed_feats > 0.75]
+# skewed_feats = skewed_feats.index
+# all_data[skewed_feats] = np.log1p(all_data[skewed_feats])
+
+
+# 数据缩放
 numeric_feats = all_data.dtypes[all_data.dtypes != "object"].index
-skewed_feats = all_data[numeric_feats].apply(lambda x: skew(x.dropna())) #Computes the skewness of a data set.
-skewed_feats = skewed_feats[skewed_feats > 0.75]
-skewed_feats = skewed_feats.index
-all_data[skewed_feats] = np.log1p(all_data[skewed_feats])
+numeric_feats = numeric_feats.delete(0) # del Id
+min_max_scaler = preprocessing.MinMaxScaler()
+all_data[numeric_feats] = min_max_scaler.fit_transform(all_data[numeric_feats])
+all_data.to_csv("kaggle/housePrices/temp/all_data.csv", index=False)
+
+
+# 数据标准化
+# scaler = preprocessing.scale(train_x)
+# StandardScaler().fit_transform(train_x)
+
 
 # dummy
 all_data = pd.get_dummies(all_data)
 train_x = all_data[all_data['Id'] < 1461]
 test_x = all_data[all_data['Id'] > 1460]
 all_data = all_data.drop(['Id'], axis=1)
+train_x = train_x.drop(['Id'], axis=1)
+test_x = test_x.drop(['Id'], axis=1)
 train_y = np.log1p(train_data['SalePrice'])
+train_y = min_max_scaler.fit_transform(train_data['SalePrice'])
 test_id = test_data['Id'].astype(pd.np.int64)
-cols = 291
+cols = 237
 
 # pd.DataFrame(train_x.columns).to_csv("kaggle/housePrices/temp/columns.csv", index=False)
 
@@ -515,14 +704,10 @@ cols = 291
 #         del test_data[index]
 
 
-# 数据标准化
-# scaler = preprocessing.scale(train_x)
-# StandardScaler().fit_transform(train_x)
-
 
 # 对齐后数据有294个特征，而训练样本只有1460个，相对而言，样本数目偏少。可通过随机森林等算法，对特征做一次初步的选择，取前100即可
 # 特征重要性选择
-etr = RandomForestRegressor(n_estimators=400)
+etr = RandomForestRegressor(n_estimators=1000)
 #                 random_state=1,       # 指在相同数据和相同参数下，是否每次都得一样的结果，如果是1，代表是？
 #                 learning_rate=0.015,  #
 #                 min_samples_split=2,  # 根据属性划分节点时，每个划分最少的样本数
@@ -621,7 +806,7 @@ plt.xlabel("alpha")
 plt.ylabel("rmse")
 
 # 0.0004
-alphas = [110, 120, 130, 140, 150, 160, 170, 180, 190]
+alphas = [0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009]
 cv_lasso = [rmse_cv(Lasso(alpha = alpha)).mean() for alpha in alphas]
 cv_lasso = pd.Series(cv_lasso, index = alphas)
 cv_lasso.plot(title = "Validation")
@@ -629,10 +814,11 @@ plt.xlabel("alpha")
 plt.ylabel("rmse")
 
 # 0.0004
-model_lasso = LassoCV(alphas = [0.0004]).fit(train_x, train_y)
+# model_lasso = LassoCV(alphas = [0.0004]).fit(train_x[imp.head(cols)['feature']], train_y)
+model_lasso = LassoCV(alphas = [0.0004]).fit(train_x[imp.head(cols)['feature']], train_y)
 rmse_cv(model_lasso).mean()
 
-coef = pd.Series(model_lasso.coef_, index = train_x.columns)
+coef = pd.Series(model_lasso.coef_, index = imp.head(cols))
 print("Lasso picked " + str(sum(coef != 0)) + " variables and eliminated the other " +  str(sum(coef == 0)) + " variables")
 coef = coef[coef != 0]
 

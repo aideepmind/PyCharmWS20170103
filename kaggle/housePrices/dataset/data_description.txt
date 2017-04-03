@@ -147,7 +147,7 @@ HouseStyle: Style of dwelling
        2.5Fin	Two and one-half story: 2nd level finished
        2.5Unf	Two and one-half story: 2nd level unfinished
        SFoyer	Split Foyer
-       SLvl	Split Level
+       SLvl	    Split Level
 	
 OverallQual: Rates the overall material and finish of the house
 
