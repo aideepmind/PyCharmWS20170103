@@ -3,22 +3,32 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
-from boto.s3 import prefix
-from scipy import stats
 from scipy.stats import norm
-from scipy.stats import mode
+from scipy import stats
 import sklearn.preprocessing as preprocessing
 from sklearn.preprocessing import StandardScaler
 from  sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import Lasso
-from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.grid_search import GridSearchCV
-from sklearn.cluster import KMeans
 import warnings
 import xgboost
 from subprocess import check_output
+from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
+from sklearn.model_selection import cross_val_score
+#Import libraries:
+import pandas as pd
+import numpy as np
+import xgboost as xgb
+from xgboost.sklearn import XGBRegressor
+from sklearn import cross_validation, metrics   #Additional     scklearn functions
+from sklearn.grid_search import GridSearchCV   #Perforing grid search
+from sklearn.neighbors import NearestNeighbors
+import matplotlib.pylab as plt
+# %matplotlib inline
+from matplotlib.pylab import rcParams
+rcParams['figure.figsize'] = 12, 4
 # print(check_output(['1s', '../input']).decode('utf-8'))
 sns.set(style = "white", color_codes = True)
 warnings.filterwarnings('ignore')
@@ -26,7 +36,7 @@ warnings.filterwarnings('ignore')
 # input
 train_data = pd.read_csv('kaggle/housePrices/dataset/train.csv')
 test_data = pd.read_csv('kaggle/housePrices/dataset/test.csv')
-all_data = pd.concat((train_data[test_data.columns], test_data))
+all_data = pd.concat((train_data[test_data.columns], test_data), ignore_index=True)
 
 # data exploration and data processing
 def get_missing_cols(data, col):
@@ -109,10 +119,7 @@ def violinplot(column):
 def scatter(column1, column2):
     plt.figure()
     if type(column1) == str:
-        if column1 not in all_data.columns or column2 not in all_data.columns:
-            plt.scatter(train_data[column1], train_data[column2])
-        else:
-            plt.scatter(all_data[column1], all_data[column2])
+        plt.scatter(all_data[column1], all_data[column2])
     else:
         plt.scatter(column1, column2)
 
@@ -177,16 +184,6 @@ def heatmap(columns):
 # all_data[all_data['MSSubClass'] > 120]['MSSubClass'] = all_data['MSSubClass'].mean() # wrong code
 # all_data['MSSubClass'].mean() #57.1377183967112,so use 60
 # all_data.loc[all_data['MSSubClass'] > 120, 'MSSubClass'] = 60
-# 值得记住，因为MSSubClass原始的数字没有意义，所以需要转换为字符类型，但考虑到种类太多，所以又可以合并一些种类，依照
-# 的SalePrice均值来分类
-# print(train_data[['MSSubClass', 'SalePrice']].groupby('MSSubClass').mean().sort_values(by = 'SalePrice'))
-all_data = all_data.replace({"MSSubClass": {30: "A", 180: "A", 45: "A",
-                                            190: "B", 90: "B", 160: "B",
-                                            50: "C", 85: "C",
-                                            40: "D", 70: "D", 80: "D",
-                                            20: "E", 75: "E",
-                                            120: "F", 60: "F",
-                                            150: "E"}})# 考虑到没出现在train中，且在test中只出现一次，故取频率最高的20
 
 
 # MSZoning test，使用了交叉表，里面有三个比较模拟两可的值，需要在模型优化时再重新设置一下，看哪一个妥当
@@ -206,10 +203,8 @@ all_data.loc[all_data['Id'] == 2251, 'MSZoning'] = 'RM'# RL
 # train_data['LotFrontage'].corr(np.sqrt(train_data['LotArea']))
 # train_data.LotFrontage[train_data['LotFrontage'].isnull()] = np.sqrt(train_data.LotArea[train_data['LotFrontage'].isnull()])
 # test_data.LotFrontage[test_data['LotFrontage'].isnull()] = np.sqrt(test_data.LotArea[test_data['LotFrontage'].isnull()])
-# 486个空值，不过，重要性排名竟然得第一，怎麼搞的？暂时delete，事实证明drop比保留更好
+# 486个空值，不过，重要性排名竟然得第一，怎麼搞的？暂时delete
 all_data = all_data.drop(['LotFrontage'], axis=1)
-# all_data.LotFrontage[all_data['LotFrontage'].isnull()] = np.sqrt(all_data.LotArea[all_data['LotFrontage'].isnull()])
-
 
 # Alley train & test
 # print(all_data['Alley'].isnull().sum())
@@ -218,12 +213,7 @@ all_data = all_data.drop(['LotFrontage'], axis=1)
 # Alley这个特征有太多的nans,这里填充None，也可以直接删除，不使用。后面在根据特征的重要性选择特征是，也可以舍去
 # cat_imputation(test_data, 'Alley', 'None')
 # cat_imputation(train_data, 'Alley', 'None')
-bool_ = all_data['Alley'].isnull()
-bool_ = pd.DataFrame({'HasAlley': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
 all_data = all_data.drop(['Alley'], axis=1)
-
 
 # Utilities test
 # 并且这个column中值得分布极为不均匀，drop
@@ -235,7 +225,6 @@ all_data = all_data.drop(['Alley'], axis=1)
 # train_data = train_data.drop(['Utilities'], axis=1)
 all_data = all_data.drop(['Utilities'], axis=1)
 
-
 # Exterior1st & Exterior2nd test，这里采用交叉表，但是结果并不理想，因为几个值都很接近暂时采取频率最高的
 # 检查Exterior1st 和 Exterior2nd 是否存在缺失值共现的情况
 # print(all_data['Exterior1st'].isnull().sum())
@@ -246,7 +235,6 @@ all_data = all_data.drop(['Utilities'], axis=1)
 # print(pd.crosstab(all_data.Exterior1st, all_data.ExterQual))
 all_data.loc[all_data['Exterior1st'].isnull(), 'Exterior1st'] = 'HdBoard'# HdBoard/MetalSd/VinylSd/Wd Sdng/Plywood
 all_data.loc[all_data['Exterior2nd'].isnull(), 'Exterior2nd'] = 'HdBoard'# HdBoard/MetalSd/VinylSd/Wd Sdng/Plywood
-
 
 # MasVnrType & MasVnrArea train & test
 # print(all_data['MasVnrType'].isnull().sum())
@@ -266,12 +254,12 @@ all_data.loc[all_data['Id'] == 2611, 'MasVnrType'] = 'BrkFace'    # Stone
 cat_imputation(all_data, 'MasVnrType', 'None')
 cat_imputation(all_data, 'MasVnrArea', 0.0)
 
-
 # basement train & test
 # train
 basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2', 'BsmtFinSF1', 'BsmtFinSF2']
 # print(train_data['BsmtQual'].isnull().sum())
 # print(train_data[basement_cols][train_data['BsmtExposure'].isnull() == True])
+# print(train_data[basement_cols][train_data['BsmtFinType2'].isnull() == True])
 # print(pd.crosstab(all_data.BsmtQual, all_data.BsmtExposure))
 # cat_frequency(all_data, 'BsmtExposure')
 # BsmtExposure和BsmtFinType2一共38个空值并有2个不一致，其他37个空值，且一致
@@ -279,15 +267,17 @@ basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', '
 # d1 = all_data[all_data['BsmtFinSF1'] < 1200]
 # cat_frequency(d1, 'BsmtExposure')
 all_data.loc[all_data['Id'] == 949, 'BsmtExposure'] = 'No'
-# print(train_data[basement_cols][train_data['BsmtFinType2'].isnull() == True])
 # d1 = all_data[all_data['BsmtFinSF2'] > 450]
 # d1 = d1[d1['BsmtFinSF2'] < 500]
 # cat_frequency(d1, 'BsmtFinType2')
 all_data.loc[all_data['Id'] == 333, 'BsmtFinType2'] = 'Rec' # LwQ/BLQ/LwQ
-
+# for cols in basement_cols:
+#     if 'FinFS' not in cols:
+#         cat_imputation(all_data, cols, 'None')
 
 # test
 basement_cols = ['Id', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF']
+# print(test_data['BsmtQual'].isnull().sum())
 # print(test_data['BsmtQual'].isnull().sum())
 # 其中,有两行有BsmtQual为NaN,该两行的其他列都有值
 # print(test_data[basement_cols][test_data['BsmtQual'].isnull() == True])
@@ -362,12 +352,8 @@ all_data[garage_cols][all_data['GarageFinish'].isnull() == True].to_csv("kaggle/
 # print(pd.crosstab(all_data.GarageQual, all_data.GarageCond))
 all_data.loc[all_data['Id'] == 2127, 'GarageQual'] = 'TA'
 all_data.loc[all_data['Id'] == 2127, 'GarageCond'] = 'TA' # max
-# 算出YearBuilt和GarageYrBlt的关系
-YearBuilt_GarageYrBlt = all_data[['YearBuilt', 'GarageYrBlt']][all_data['GarageYrBlt'].isnull() == False]
-YearBuilt_GarageYrBlt_sum = np.sum(YearBuilt_GarageYrBlt)
-YearBuilt_GarageYrBlt_subtract = np.round((YearBuilt_GarageYrBlt_sum[0] - YearBuilt_GarageYrBlt_sum[1]) / len(YearBuilt_GarageYrBlt))
-all_data.loc[all_data['Id'] == 2127, 'GarageYrBlt'] = all_data.loc[all_data['Id'] == 2127, 'YearBuilt'] -  YearBuilt_GarageYrBlt_subtract
-all_data.loc[all_data['Id'] == 2127, 'GarageFinish'] = 'Fin' # 因为是1915年，所以是Finished
+all_data.loc[all_data['Id'] == 2127, 'GarageYrBlt'] = 1978 # mean
+all_data.loc[all_data['Id'] == 2127, 'GarageFinish'] = 'Fin' # 因为是1978年，所以是Finished
 # 因为Id=2577只有GarageType为Detchd，其他列没有值，所干脆把GarageType置为空
 all_data.loc[all_data['Id'] == 2577, 'GarageType'] = 'None'
 # cat_null_sum('GarageCond') 159
@@ -393,10 +379,10 @@ for cols in garage_cols:
 # cat_null_sum('PoolQC')
 # print(all_data['PoolQC'][all_data['PoolQC'].isnull() == False])
 # 只有10个大于0的值，drop
-# all_data = all_data.drop(['PoolQC'], axis=1)
+all_data = all_data.drop(['PoolQC'], axis=1)
 # cat_null_sum('PoolArea')
 # 只有13个大于0的值，drop
-# all_data = all_data.drop(['PoolArea'], axis=1)
+all_data = all_data.drop(['PoolArea'], axis=1)
 
 
 # Fence train & test
@@ -425,7 +411,67 @@ cat_imputation(all_data, 'Electrical', 'SBrkr')
 
 # 查看是否还有缺失值
 all_data.isnull().sum().max()
+# 调整数据的格式，可能因为all_data使用了concat的缘故，导致了许多原本整型或浮点型的数据格式变成了Object类型，需要跟train做比较
+train_data_cols = train_data.columns
+all_data_cols = all_data.columns
+for col in all_data_cols:
+    if col in train_data_cols:
+            tmp_col = all_data[col].astype(train_data[col].dtype)
+            tmp_col = pd.DataFrame({col: tmp_col})
+            del all_data[col]
+            all_data = pd.concat((all_data, tmp_col), axis=1)
 
+
+# remove outters
+# 524, 1299, 1183, 692
+# according to SalePrice
+all_data = all_data.drop(train_data[train_data['SalePrice'] > 600000].index , axis=0)
+train_data = train_data.drop(train_data[train_data['SalePrice'] > 600000].index , axis=0)
+# according to GrLivArea
+# plt.scatter(train_data['GrLivArea'], train_data['SalePrice'])
+# train_data[train_data['GrLivArea'] > 4000]
+all_data = all_data.drop(train_data[train_data['GrLivArea'] > 4000].index , axis=0)
+train_data = train_data.drop(train_data[train_data['GrLivArea'] > 4000].index , axis=0)
+# according to LotArea & LotFrontage
+# train_data['LotArea'][train_data['LotArea'] > 60000]
+# test_data['LotArea'][test_data['LotArea'] > 60000]
+all_data = all_data.drop(train_data[train_data['LotArea'] > 70000].index , axis=0)
+train_data = train_data.drop(train_data[train_data['LotArea'] > 70000].index , axis=0)
+# plt.scatter(train_data['LotFrontage'], train_data['SalePrice'])
+# test_data['LotFrontage'][test_data['LotFrontage'] > 200]
+# all_data = all_data.drop(train_data[train_data['LotFrontage'] > 200].index , axis=0)
+# train_data = train_data.drop(train_data[train_data['LotFrontage'] > 200].index , axis=0)
+
+# according to OverallQual
+# var = 'OverallQual'
+# data = pd.concat([train_data['SalePrice'], train_data[var]], axis=1)
+# f, ax = plt.subplots(figsize=(8, 6))
+# fig = sns.boxplot(x=var, y="SalePrice", data=data)
+# fig.axis(ymin=0, ymax=800000)
+all_data = all_data.drop(train_data[(train_data['SalePrice'] > 250000) & (train_data['OverallQual'] == 4)].index , axis=0)
+train_data = train_data.drop(train_data[(train_data['SalePrice'] > 250000) & (train_data['OverallQual'] == 4)].index , axis=0)
+all_data = all_data.drop(train_data[(train_data['SalePrice'] > 380000) & (train_data['OverallQual'] == 7)].index , axis=0)
+train_data = train_data.drop(train_data[(train_data['SalePrice'] > 380000) & (train_data['OverallQual'] == 7)].index , axis=0)
+all_data = all_data.drop(train_data[(train_data['SalePrice'] < 100000) & (train_data['OverallQual'] == 7)].index , axis=0)
+train_data = train_data.drop(train_data[(train_data['SalePrice'] < 100000) & (train_data['OverallQual'] == 7)].index , axis=0)
+all_data = all_data.drop(train_data[(train_data['SalePrice'] > 500000) & (train_data['OverallQual'] == 8)].index , axis=0)
+train_data = train_data.drop(train_data[(train_data['SalePrice'] > 500000) & (train_data['OverallQual'] == 8)].index , axis=0)
+all_data = all_data.drop(train_data[(train_data['SalePrice'] < 130000) & (train_data['OverallQual'] == 8)].index , axis=0)
+train_data = train_data.drop(train_data[(train_data['SalePrice'] < 130000) & (train_data['OverallQual'] == 8)].index , axis=0)
+# according to TotalBsmtSF
+# all_data['TotalBsmtSF'][all_data['TotalBsmtSF'] > 2500]
+# all_data = all_data.drop(train_data[train_data['TotalBsmtSF'] > 3000].index , axis=0)
+# train_data = train_data.drop(train_data[train_data['TotalBsmtSF'] > 3000].index , axis=0)
+# 让test数据中大于3000的取all中大于2500的均值
+all_data.loc[all_data['TotalBsmtSF'] > 3000, 'TotalBsmtSF'] = np.mean(all_data['TotalBsmtSF'][all_data['TotalBsmtSF'] > 2500])
+# according to GarageCars
+# var = 'GarageCars'
+# data = pd.concat([train_data['SalePrice'], train_data[var]], axis=1)
+# f, ax = plt.subplots(figsize=(8, 6))
+# fig = sns.boxplot(x=var, y="SalePrice", data=data)
+# fig.axis(ymin=0, ymax=800000)
+# according to GarageArea
+# plt.scatter(train_data['GarageArea'], train_data['SalePrice'])
 
 # 到此为止，我们基本把所有的缺失值都填补完整了，但是还有一列MSSubClass，原始数据类型是int64,我并不认为这一列具有可比性，所以把MSSubClass映射成object
 # convert MSSubClass to object
@@ -433,189 +479,6 @@ all_data.isnull().sum().max()
 #                                                 60: "F", 70: "G", 75: "H", 80: "I", 85: "J",
 #                                                 90: "K", 120: "L", 150: "M", 160: "N", 180: "O", 190: "P"}})
 
-all_data = all_data.replace({"ExterQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
-all_data = all_data.replace({"ExterCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
-all_data = all_data.replace({"HeatingQC": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
-all_data = all_data.replace({"KitchenQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
-all_data = all_data.replace({"FireplaceQu": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
-all_data = all_data.replace({"BsmtQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
-all_data = all_data.replace({"BsmtCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
-all_data = all_data.replace({"BsmtExposure": {"Gd": 4, "Av": 3, "Mn": 2, "No": 1, "None": 0}})
-all_data = all_data.replace({"BsmtFinType1": {"GLQ": 5, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "None": 0}})
-all_data = all_data.replace({"BsmtFinType2": {"GLQ": 5, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "None": 0}})
-all_data = all_data.replace({"GarageQual": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
-all_data = all_data.replace({"GarageCond": {"Ex": 5, "Gd": 4, "TA": 3, "Fa": 2, "Po": 1, "None": 0}})
-all_data = all_data.replace({"GarageFinish": {"Fin": 3, "RFn": 2, "Unf": 1, "None": 0}})
-all_data = all_data.replace({"PavedDrive": {"Y": 3, "P": 2, "N": 1}})
-all_data = all_data.replace({"Fence": {"GdPrv": 4, "MnPrv": 3, "GdWo": 2, "MnWw": 1, "None": 0}})
-
-
-# Neighborhood 通过K-Means来分类
-# 根据地址借助外部工具（www.addressreport.com）收集一些新的数据（Location,Cost_of_living,Income,Owners,Annual_property_tax,School,Crime,Ville）
-ngbr_details = pd.read_csv('kaggle/housePrices/dataset/neighborhood_details.csv')
-ngbr_details = ngbr_details.drop('Neighborhood_etiquette', axis=1)
-# 使用均值填充，但字符类型无法填充所以使用众数来填充
-ngbr_details = ngbr_details.fillna(ngbr_details.mean())
-# mode返回众数值和对应次数（只能是数字类型）
-# ngbr_details['Location'].fillna(mode(ngbr_details['Location']).mode[0], inplace=True)
-ngbr_details['Location'].fillna("NN", inplace=True)
-# Location的one-hot
-ngbr_details = pd.concat((ngbr_details, pd.get_dummies(ngbr_details['Location'], prefix='Location')), axis=1)
-ngbr_details = ngbr_details.drop('Location', axis = 1)
-# 合并 pd.merge
-all_data = pd.merge(all_data, ngbr_details, how='left', on='Neighborhood', sort=False)
-# 按Neighborhood分组
-grouped = train_data[['Neighborhood', 'SalePrice']].groupby('Neighborhood')
-temp = pd.concat((grouped.mean().rename(columns = {'SalePrice':'meanSalePrice'}), grouped.median().rename(columns = {'SalePrice':'medSalePrice'})), axis=1)
-temp = pd.concat((temp, grouped.std().rename(columns = {'SalePrice':'stdSalePrice'})), axis=1)
-temp = pd.concat((temp, grouped.count().rename(columns = {'SalePrice':'countSalePrice'})), axis=1)
-# K-Means聚类
-km = KMeans(n_clusters=10).fit_predict(temp)
-temp = pd.DataFrame({'Neighborhood': temp.index, 'NeighborhoodCl': km})
-all_data = pd.merge(all_data, temp, how='left', on='Neighborhood', sort=False)
-for cls in np.arange(10):
-    bool_ = all_data['NeighborhoodCl'] == cls
-    bool_ = pd.DataFrame({'Neighborhood' + str(cls): bool_}, index=bool_.index)
-    bool_ = bool_.astype(pd.np.float64)
-    all_data = pd.concat((all_data, bool_), axis=1)
-all_data = all_data.drop('Neighborhood', axis=1)
-all_data = all_data.drop('NeighborhoodCl', axis=1)
-
-
-# Condition1  & Condition2
-# print((all_data['Condition1'] != all_data['Condition2']).value_counts())
-# print(all_data[all_data['Condition1'] != all_data['Condition2']][['Condition1', 'Condition2']])
-# 交通条件，有Condition1和Condition2，如果Condition1=Condition2，则只有一个，否则是拥有两个不一样的条件
-col_values = ['Artery', 'Feedr', 'Norm', 'RRNn', 'RRAn', 'PosN', 'PosA', 'RRNe', 'RRAe']
-for index in np.arange(len(col_values)):
-    bool_ = (all_data['Condition1'] == col_values[index]) | (all_data['Condition2'] == col_values[index])
-    bool_ = pd.DataFrame({'Condition_' + col_values[index]: bool_}, index=bool_.index)
-    bool_ = bool_.astype(pd.np.float64)
-    all_data = pd.concat((all_data, bool_), axis=1)
-bool_ = all_data['Condition1'] != all_data['Condition2']
-bool_ = pd.DataFrame({'Condition_Has_Two': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-all_data = all_data.drop('Condition1', axis=1)
-all_data = all_data.drop('Condition2', axis=1)
-
-
-# YearBuilt & YearRemodAdd
-# displot('YearRemodAdd')
-# displot('YearRemodAdd')
-# scatter('YearRemodAdd', 'YearBuilt')
-# all_data[['YearBuilt', 'YearRemodAdd']][all_data['YearBuilt'] > all_data['YearRemodAdd']]
-# 从数据中可以看出YearRemodAdd在1950年之前的数据没有，所以需要利用与YearBuilt的线性关系预测其1950年数据
-regr = LinearRegression()
-year_after_1950 = all_data[['YearBuilt', 'YearRemodAdd']][all_data['YearBuilt'] > 1950]
-year_before_1950 = all_data[['YearBuilt']][all_data['YearRemodAdd'] <= 1950]
-# series不能转置，故year_after_1950['YearBuilt'].T无效，需转换成DataFrame
-regr.fit(year_after_1950['YearBuilt'].to_frame(), year_after_1950['YearRemodAdd'])
-year_before_1950_preds = np.round(regr.predict(year_before_1950))
-all_data.loc[all_data['YearRemodAdd'] <= 1950, 'YearRemodAdd'] = year_before_1950_preds
-bool_ = all_data['YearBuilt'] != all_data['YearRemodAdd']
-bool_ = pd.DataFrame({'isRemod': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-
-#Fireplaces
-bool_ = all_data['Fireplaces'] > 0
-bool_ = pd.DataFrame({'HasFireplaces': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-# all_data = all_data.drop('Fireplaces', axis=1)
-
-
-#WoodDeckSF
-bool_ = all_data['WoodDeckSF'] > 0
-bool_ = pd.DataFrame({'HasWoodDeckSF': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-
-#OpenPorchSF
-bool_ = all_data['OpenPorchSF'] > 0
-bool_ = pd.DataFrame({'HasOpenPorchSF': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-
-#EnclosedPorch
-bool_ = all_data['EnclosedPorch'] > 0
-bool_ = pd.DataFrame({'HasEnclosedPorch': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-
-#3SsnPorch
-bool_ = all_data['3SsnPorch'] > 0
-bool_ = pd.DataFrame({'Has3SsnPorch': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-
-# ScreenPorch
-bool_ = all_data['ScreenPorch'] > 0
-bool_ = pd.DataFrame({'HasScreenPorch': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-
-# PoolArea 描述是否有的问题
-bool_ = all_data['PoolArea'] > 0
-bool_ = pd.DataFrame({'HasPoolArea': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-
-# PoolQC 描述质量问题
-bool_ = (all_data['PoolQC'] == 'Ex') | (all_data['PoolQC'] == 'Gd')
-bool_ = pd.DataFrame({'PoolQCExOrGd': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-all_data = all_data.drop('PoolQC', axis=1)
-
-
-# Fence
-bool_ = all_data['Fence'] != 0
-bool_ = pd.DataFrame({'HasFence': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-
-# MiscFeature
-bool_ = all_data['MiscFeature'] == 'Gar2'
-bool_ = pd.DataFrame({'HasMiscFeature_Gar2': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-
-bool_ = all_data['MiscFeature'] == 'Shed'
-bool_ = pd.DataFrame({'HasMiscFeature_Shed': bool_}, index=bool_.index)
-bool_ = bool_.astype(pd.np.float64)
-all_data = pd.concat((all_data, bool_), axis=1)
-all_data = all_data.drop('MiscFeature', axis=1)
-
-# YrSold
-all_data['YrSold'] = all_data['YrSold'] - 2005
-all_data.YearBetweenSoldAndBuilt = all_data['YrSold'] - all_data['YearBuilt']
-
-
-
-# 调整数据的格式，可能因为all_data使用了concat的缘故，导致了许多原本整型或浮点型的数据格式变成了Object类型，需要跟train做比较
-train_data_cols = train_data.columns
-all_data_cols = all_data.columns
-for col in all_data_cols:
-    if col in train_data_cols and all_data[col].dtype != train_data[col].dtype and train_data[col].dtype != object and col != 'MSSubClass':
-        # print(col)
-        tmp_col = all_data[col].astype(train_data[col].dtype)
-        tmp_col = pd.DataFrame({col: tmp_col})
-        del all_data[col]
-        all_data = pd.concat((all_data, tmp_col), axis=1)
-
-
-# all_data.to_csv("kaggle/housePrices/temp/all_data.csv", index=False)
 
 # 将所有categorical类型的特征进行one-hot编码。需要注意的是：训练集和测试集中，相同的列可能会有不同的类型需要统一
 # for col in test_data.columns:
@@ -655,35 +518,26 @@ for col in all_data_cols:
 from scipy.stats import skew
 numeric_feats = all_data.dtypes[all_data.dtypes != "object"].index
 skewed_feats = all_data[numeric_feats].apply(lambda x: skew(x.dropna())) #Computes the skewness of a data set.
-skewed_feats = skewed_feats[skewed_feats > 0.75]
-skewed_feats = skewed_feats.index
-all_data[skewed_feats] = np.log1p(all_data[skewed_feats])
+skewed_feats_1 = skewed_feats[skewed_feats > 0.7]   # 0.6/0.7
+skewed_feats_2 = skewed_feats[skewed_feats <= 0.7]
+# skewed_feats = skewed_feats.drop('Id')
+all_data[skewed_feats_1.index] = np.log1p(all_data[skewed_feats_1.index])
 
-
-# 数据缩放
-# numeric_feats = all_data.dtypes[all_data.dtypes != "object"].index
-# numeric_feats = numeric_feats.delete(0) # del Id
+# skewed_feats_2 = skewed_feats_2.drop('Id') # del Id
 # min_max_scaler = preprocessing.MinMaxScaler()
-# all_data[numeric_feats] = min_max_scaler.fit_transform(all_data[numeric_feats])
+# all_data[skewed_feats_2.index] = min_max_scaler.fit_transform(all_data[skewed_feats_2.index])
 # all_data.to_csv("kaggle/housePrices/temp/all_data.csv", index=False)
-
-
-# 数据标准化
-# scaler = preprocessing.scale(train_x)
-# StandardScaler().fit_transform(train_x)
-
 
 # dummy
 all_data = pd.get_dummies(all_data)
 train_x = all_data[all_data['Id'] < 1461]
 test_x = all_data[all_data['Id'] > 1460]
-all_data = all_data.drop(['Id'], axis=1)
+# all_data = all_data.drop(['Id'], axis=1)
 train_x = train_x.drop(['Id'], axis=1)
 test_x = test_x.drop(['Id'], axis=1)
 train_y = np.log1p(train_data['SalePrice'])
-# train_y = min_max_scaler.fit_transform(train_data['SalePrice'])
 test_id = test_data['Id'].astype(pd.np.int64)
-cols = 232
+cols = len(all_data.columns)
 
 # pd.DataFrame(train_x.columns).to_csv("kaggle/housePrices/temp/columns.csv", index=False)
 
@@ -704,10 +558,14 @@ cols = 232
 #         del test_data[index]
 
 
+# 数据标准化
+# scaler = preprocessing.scale(train_x)
+# StandardScaler().fit_transform(train_x)
+
 
 # 对齐后数据有294个特征，而训练样本只有1460个，相对而言，样本数目偏少。可通过随机森林等算法，对特征做一次初步的选择，取前100即可
 # 特征重要性选择
-etr = RandomForestRegressor(n_estimators=1000)
+# etr = RandomForestRegressor(n_estimators=400)
 #                 random_state=1,       # 指在相同数据和相同参数下，是否每次都得一样的结果，如果是1，代表是？
 #                 learning_rate=0.015,  #
 #                 min_samples_split=2,  # 根据属性划分节点时，每个划分最少的样本数
@@ -727,12 +585,12 @@ etr = RandomForestRegressor(n_estimators=1000)
 #                 #oob_score            # oob（out of band，带外）数据，即：在某次决策树训练中没有被bootstrap选中的数据。多单个模型的参数训练，
 #                                       # 我们知道可以用cross validation（cv）来进行，但是特别消耗时间，而且对于随机森林这种情况也没有大的必要，所以就用这个数据对决策树模型进行验证，算是一个简单的交叉验证。性能消耗小，但是效果不错
 
-etr.fit(train_x, train_y)
+# etr.fit(train_x, train_y)
 # print(etr.feature_importances_)
-imp = etr.feature_importances_
-imp = pd.DataFrame({'feature': train_x.columns, 'score': imp})
+# imp = etr.feature_importances_
+# imp = pd.DataFrame({'feature': train_x.columns, 'score': imp})
 # print(imp.sort(['score'], ascending=[0]))  # 按照特征重要性, 进行降序排列, 最重要的特征在最前面
-imp = imp.sort(['score'], ascending=[0])
+# imp = imp.sort(['score'], ascending=[0])
 # imp.to_csv("kaggle/housePrices/temp/feature_importances2.csv", index=False)
 
 
@@ -787,14 +645,13 @@ from scipy.stats.stats import pearsonr
 # X_test = all_data[train.shape[0]:]
 # y = train.SalePrice
 
-from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
-from sklearn.model_selection import cross_val_score
+# from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
+# from sklearn.model_selection import cross_val_score
 #
 def rmse_cv(model):
 # “neg_mean_squared_error”是将预测的relevance的值和实际的relevance的值进行均方误差，即第二步中的MSE的公式。但是用corss_val_score返回的score是负数值，需要加负号再开根号
-    rmse= np.sqrt(-cross_val_score(model, train_x[imp.head(cols)['feature']], train_y, scoring="neg_mean_squared_error", cv = 5))    # neg_mean_squared_error: 计算均方误差
+    rmse= np.sqrt(-cross_val_score(model, train_x, train_y, scoring="neg_mean_squared_error", cv = 5))    # neg_mean_squared_error: 计算均方误差
     return(rmse)
-
 # RidgeCV
 # min during 12.2 - 12.4
 # alphas = [0.05, 0.1, 0.3, 1, 3, 5, 10, 15, 30, 50, 75]
@@ -805,7 +662,7 @@ cv_ridge.plot(title = "Validation")
 plt.xlabel("alpha")
 plt.ylabel("rmse")
 
-# 0.0004
+# 0.0006
 alphas = [0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009]
 cv_lasso = [rmse_cv(Lasso(alpha = alpha)).mean() for alpha in alphas]
 cv_lasso = pd.Series(cv_lasso, index = alphas)
@@ -813,12 +670,40 @@ cv_lasso.plot(title = "Validation")
 plt.xlabel("alpha")
 plt.ylabel("rmse")
 
-# 0.0004
-# model_lasso = LassoCV(alphas = [0.0004]).fit(train_x[imp.head(cols)['feature']], train_y)
-model_lasso = LassoCV(alphas = [0.0004]).fit(train_x[imp.head(cols)['feature']], train_y)
+# 0.0005
+# model_lasso = LassoCV(alphas = [0.0005]).fit(train_x[imp.head(cols)['feature']], train_y)
+model_lasso = LassoCV(alphas = [0.0005]).fit(train_x, train_y)
 rmse_cv(model_lasso).mean()
 
-coef = pd.Series(model_lasso.coef_, index = imp.head(cols))
+lasso_preds = np.expm1(model_lasso.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": lasso_preds})
+# 通过预测值分布发现一异常值 Id=2550
+# result.loc[result['SalePrice'] > 600000, 'SalePrice'] = np.mean(result['SalePrice'][result['SalePrice'] < 600000])
+# sns.distplot(result['SalePrice'], fit=norm)
+# 使用KNN来找接近的一组数据的均值
+# 除了异常Id的其他数据
+# neigh = NearestNeighbors(n_neighbors=3, algorithm='ball_tree').fit(all_data[all_data.columns.drop('Id')])
+# test_x_outter = all_data.loc[all_data['Id'] == 2550]
+# nbrs = neigh.kneighbors(test_x_outter[all_data.columns.drop('Id')], return_distance=False)
+# 找出对应Id
+# nbrs_ids = all_data.loc[nbrs[0]]['Id']
+# count = 0
+# for id in nbrs_ids.values:
+#     if id > 1460:
+#         print(id)
+#         count = count + result['SalePrice'][result['Id'] == id].values
+#     else:
+#         count = count + train_data['SalePrice'][train_data['Id'] == id].values
+# nbrs_value = count / len(nbrs_ids)
+result['SalePrice'][result['Id'] == 2550] = 235594.51145508
+
+result.to_csv("kaggle/housePrices/temp/lasso_test_result.csv", index=False)
+
+
+
+
+
+coef = pd.Series(model_lasso.coef_, index = train_x.columns)
 print("Lasso picked " + str(sum(coef != 0)) + " variables and eliminated the other " +  str(sum(coef == 0)) + " variables")
 coef = coef[coef != 0]
 
@@ -837,14 +722,13 @@ preds.plot(x = "preds", y = "residuals", kind = "scatter")
 import xgboost as xgb
 
 # train_x[imp.head(293)['feature']]
-# train_x[coef.index]
-dtrain = xgb.DMatrix(train_x, label = train_y)
+dtrain = xgb.DMatrix(train_x[coef.index], label = train_y)
 # dtest = xgb.DMatrix(test_x[imp.head(cols)['feature']])
 
 params = {
-    "max_depth": 5,
-    "eta": 0.1,
-    "min_child_weight": 4,
+    "max_depth": 2,
+    "eta": 0.08,
+    "min_child_weight": 1,
     "gamma": 0,
     "objective": "reg:linear",
     "subsample": 0.8,
@@ -855,10 +739,10 @@ print(model['test-rmse-mean'].min())
 print(model['train-rmse-mean'].min())
 
 model_xgb = xgb.XGBRegressor(
-    n_estimators=500,
-    learning_rate=0.1,
-    max_depth=5,
-    min_child_weight=4,
+    n_estimators=410,
+    learning_rate=0.08,
+    max_depth=2,
+    min_child_weight=3,
     gamma=0,
     subsample=0.8,
     colsample_bytree=0.8,
@@ -878,11 +762,6 @@ predictions.plot(x = "xgb", y = "lasso", kind = "scatter")
 preds = 0.7 * lasso_preds + 0.3 * xgb_preds
 solution = pd.DataFrame({"Id": test_id, "SalePrice": preds})
 solution.to_csv("kaggle/housePrices/temp/lasso_xgb_test_result.csv", index=False)
-
-lasso_preds = model_lasso.predict(test_x[imp.head(cols)['feature']])
-result = pd.DataFrame({"Id": test_id, "SalePrice": lasso_preds})
-result.to_csv("kaggle/housePrices/temp/lasso_test_result.csv", index=False)
-
 
 # 1.Get More Data 2.Invent More Data 3.Clean Your Data 4.Resample Data 5.Reframe Your Problem 6.Rescale Your Data 7.Transform Your Data 8.Project Your Data 9.Feature Selection 10.Feature Engineering
 # 1.Resampling Method 2.Evaluation Metric 3.Baseline Performance 4.Spot Check Linear Algorithms 5.Spot Check Nonlinear Algorithms 6.Steal from Literature 7.Standard Configurations
@@ -936,17 +815,17 @@ def modelfit(alg, train_x, train_y,useTrainCV=False, cv_folds=5, early_stopping_
     # feat_imp.head(50).plot(kind='bar', title='Feature Importances')
     # plt.ylabel('Feature Importance Score')
 
-    dtest_predictions = alg.predict(test_x)
-    dtest_predictions = np.expm1(dtest_predictions)
-    test_result = pd.DataFrame({"Id": test_id, "SalePrice": dtest_predictions})
-    test_result.to_csv("kaggle/housePrices/temp/xgb_test_result.csv", index=False)
+    # dtest_predictions = alg.predict(test_x[imp.head(293)['feature']])
+    # dtest_predictions = np.expm1(dtest_predictions)
+    # test_result = pd.DataFrame({"Id": test_id, "SalePrice": dtest_predictions})
+    # test_result.to_csv("kaggle/housePrices/temp/xgb_test_result.csv", index=False)
 
 # Choose all predictors except target & IDcols
 xgb1 = XGBRegressor(
-    n_estimators=500,
-    learning_rate=0.1,
-    max_depth=5,
-    min_child_weight=4,
+    n_estimators=1000,
+    learning_rate=0.08,
+    max_depth=2,
+    min_child_weight=1,
     gamma=0,
     subsample=0.8,
     colsample_bytree=0.8,
@@ -956,16 +835,12 @@ xgb1 = XGBRegressor(
     nthread=4)
 modelfit(xgb1, train_x, train_y)
 
-# max_features
-# for i in np.arange(10):
-#     print('i=', i)
-#     modelfit(xgb1, train_x[imp.head(120 + i * 10)['feature']], train_y)
 
 # {'max_depth': 2, 'min_child_weight': 3},
 # -0.015092031338683542)
 param_test1 = {
- 'max_depth': [2, 3, 4, 5, 6, 7],
- 'min_child_weight': [1, 2, 3, 4, 5, 6]
+ 'max_depth': [2, 3, 4, 5],
+ 'min_child_weight': [1, 2, 3, 4]
 }
 
 # {'n_estimators': 410},
@@ -1001,10 +876,10 @@ param_test1 = {
 
 gsearch1 = GridSearchCV(
     estimator = XGBRegressor(
-        n_estimators=500,
-        learning_rate=0.1,
-        max_depth=2,
-        min_child_weight=3,
+        n_estimators=1000,
+        learning_rate=0.08,
+        max_depth=3,
+        min_child_weight=1,
         gamma=0,
         subsample=0.8,
         colsample_bytree=0.8,
@@ -1017,7 +892,196 @@ gsearch1 = GridSearchCV(
     n_jobs=4,
     iid=False,
     cv=5)
+# [imp.head(cols)['feature']]
 gsearch1.fit(train_x, train_y)
 gsearch1.grid_scores_, gsearch1.best_params_, gsearch1.best_score_
 
-# 0.12831
+
+
+#                 random_state=1,       # 指在相同数据和相同参数下，是否每次都得一样的结果，如果是1，代表是？
+#                 min_samples_split=2,  # 根据属性划分节点时，每个划分最少的样本数
+#                 max_features='sqrt',  # 最大特征数量: 1.Auto/None 2.sqrt  3.0.x 4.log2 5.整数，一般特征越多，模型越准，但需要考虑性能和准确率的平衡
+#                 n_estimators          # 决策树的个数，越多越好，但是性能就会越差，至少100左右（具体数字忘记从哪里来的了）可以达到可接受的性能和误差率
+#                 min_samples_leaf=1,   # 叶结点上最少的样本数量,通常越小越能捕获异常值，一般设置50
+#                 subsample=0.2,        #
+#                 max_depth=3,          # 设置树的最大深度，默认为None，这样建树时，会使每一个叶节点只有一个类别，或是达到min_samples_split
+#                 #n_jobs=-1            # 使用处理器（并行）的数量，1表示不并行，n表示n个并行，-1表示没有限制，并行对bagging（非boosting）重要
+#                 #min_samples_leaf     #(default=None)叶子树的最大样本数
+#                 #min_weight_fraction_leaf    #  (default=0) 叶子节点所需要的最小权值
+#                 #criterion            # "gini" or “entropy"(default="gini")是计算属性的gini(基尼不纯度)还是entropy(信息增益)，来选择最合适的节点
+#                 #splitter             # "best" or “random"(default="best")随机选择属性还是选择不纯度最大的属性，建议用默认
+#                 #bootstrap            # 是否有放回的采样
+#                 #warm_start           # 热启动，决定是否使用上次调用该类的结果然后增加新的
+#                 #class_weight         # 各个label的权重
+#                 #oob_score            # oob（out of band，带外）数据，即：在某次决策树训练中没有被bootstrap选中的数据。多单个模型的参数训练，
+#                                       # 我们知道可以用cross validation（cv）来进行，但是特别消耗时间，而且对于随机森林这种情况也没有大的必要，所以就用这个数据对决策树模型进行验证，算是一个简单的交叉验证。性能消耗小，但是效果不错
+
+param_test2 = {
+    'max_depth': [50, 60, 70],
+    'min_samples_split': [2, 3, 4, 5]
+}
+
+gsearch2 = GridSearchCV(
+    estimator = RandomForestRegressor(
+        n_estimators=1000,
+        max_depth=50,
+        max_features='sqrt',
+        min_samples_split=2,
+        min_samples_leaf=2),
+    param_grid=param_test2,
+    scoring='neg_mean_squared_error',   # scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    n_jobs=4,
+    iid=False,
+    cv=5)
+gsearch2.fit(train_x, train_y)
+gsearch2.grid_scores_, gsearch2.best_params_, gsearch2.best_score_
+
+
+
+#                 random_state=1,       # 作为每次产生随机数的随机种子
+                                        # 使用随机种子对于调参过程是很重要的，因为如果我们每次都用不同的随机种子，即使参数值没变每次出来的结果也会不同，这样不利于比较不同模型的结果
+                                        # 任一个随即样本都有可能导致过度拟合，可以用不同的随机样本建模来减少过度拟合的可能，但这样计算上也会昂贵很多，因而我们很少这样用
+#                 learning_rate=0.015,  # 学习率
+#                 min_samples_split=2,  # 根据属性划分节点时，每个划分最少的样本数
+#                 max_features='sqrt',  # 最大特征数量: 1.Auto/None 2.sqrt  3.0.x 4.log2 5.整数，一般特征越多，模型越准，但需要考虑性能和准确率的平衡
+#                 n_estimators=400,     # 决策树的个数，越多越好，但是性能就会越差，至少100左右（具体数字忘记从哪里来的了）可以达到可接受的性能和误差率
+#                 min_samples_leaf=1,   # 叶结点上最少的样本数量,通常越小越能捕获异常值，一般设置50
+#                 subsample=0.2,        # 训练每个决定树所用到的子样本占总样本的比例，而对于子样本的选择是随机的
+#                                       # 用稍小于1的值能够使模型更稳健，因为这样减少了方差
+#                                       # 一把来说用~0.8就行了，更好的结果可以用调参获得
+#                 max_depth=3,          # 设置树的最大深度，默认为None，这样建树时，会使每一个叶节点只有一个类别，或是达到min_samples_split
+#                 loss,                 # 指的是每一次节点分裂所要最小化的损失函数(loss function)
+                                        # 对于分类和回归模型可以有不同的值。一般来说不用更改，用默认值就可以了，除非你对它及它对模型的影响很清楚
+#                 init ,                # 它影响了输出参数的起始化过程
+#                                       # 如果我们有一个模型，它的输出结果会用来作为GBM模型的起始估计，这个时候就可以用init
+#                 verbose,              # 决定建模完成后对输出的打印方式：0：不输出任何结果（默认）; 1：打印特定区域的树的输出结果; >1：打印所有结果
+#                 warm_start            # 这个参数的效果很有趣，有效地使用它可以省很多事
+#                                       # 使用它我们就可以用一个建好的模型来训练额外的决定树，能节省大量的时间，对于高阶应用我们应该多多探索这个选项
+#                 presort               # 决定是否对数据进行预排序，可以使得树分裂地更快
+#                                       # 默认情况下是自动选择的，当然你可以对其更改
+
+# loss='ls', learning_rate=0.1, n_estimators=100,
+#                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
+#                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
+#                  max_depth=3, min_impurity_split=1e-7, init=None, random_state=None,
+#                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+#                  warm_start=False, presort='auto'
+
+# 'max_depth': 5, 'min_samples_split': 40
+param_test3 = {
+    'max_depth': [3, 5, 7],
+    'min_samples_split': [20, 30, 40, 50, 60, 70]
+}
+
+# 'min_samples_split': 25 & 'min_samples_leaf': 2
+# param_test3 = {
+#     'min_samples_split': [20, 25, 30, 35],
+#     'min_samples_leaf': [1, 2, 3, 4]
+# }
+
+# {'max_features': 50},
+# -0.015390050158229016)
+# param_test3 = {
+#     'max_features': [30, 40, 45, 50, 55]
+# }
+
+# {'subsample': 0.8},
+# -0.015390050158229016)
+# param_test3 = {
+#     'subsample': [0.6, 0.65, 0.7, 0.75, 0.8, 0.85]
+# }
+
+# {'learning_rate': 0.07},
+#  -0.014952604336203)
+# param_test3 = {
+#     'learning_rate': [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14]
+# }
+
+# {'n_estimators': 500},
+# -0.014952604336203)
+# param_test3 = {
+#     'n_estimators': [500, 1000, 1500, 2000]
+# }
+gsearch3 = GridSearchCV(
+    estimator = GradientBoostingRegressor(
+        n_estimators=500,
+        learning_rate=0.07,
+        max_features=50,
+        max_depth=3,
+        min_samples_split=60,
+        min_samples_leaf=2,
+        subsample=0.8,
+        random_state=10),
+    param_grid=param_test3,
+    scoring='neg_mean_squared_error',   # scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    n_jobs=4,
+    iid=False,
+    cv=5)
+gsearch3.fit(train_x, train_y)
+gsearch3.grid_scores_, gsearch3.best_params_, gsearch3.best_score_
+
+
+
+
+
+# 利用两模型（Lasso和gbm）的预测值当作特征与训练数据合并，再使用RF训练
+# Lasso
+model_lasso = LassoCV(alphas = [0.0005]).fit(train_x, train_y)
+rmse_cv(model_lasso).mean()
+preds_lasso = model_lasso.predict(train_x)
+rmse_lasso = np.sqrt(metrics.mean_squared_error(train_y, preds_lasso))
+print('rmse_lasso:', rmse_lasso)
+# gbm
+model_gbm = GradientBoostingRegressor(
+        n_estimators=500,
+        learning_rate=0.07,
+        max_features=50,
+        max_depth=3,
+        min_samples_split=60,
+        min_samples_leaf=2,
+        subsample=0.8,
+        random_state=10)
+model_gbm.fit(train_x, train_y)
+preds_gbm = model_gbm.predict(train_x)
+rmse_gbm = np.sqrt(metrics.mean_squared_error(train_y, preds_gbm))
+print('rmse_gbm:', rmse_gbm)
+# 看图
+rcParams['figure.figsize'] = 6, 6
+predictions = pd.DataFrame({"gbm":preds_gbm, "lasso":preds_lasso})
+predictions.plot(x = "gbm", y = "lasso", kind = "scatter")
+# 把预测值与训练数据合并
+lasso_preds_df = pd.DataFrame(preds_lasso, columns=['lasso_preds_df'], index=train_x.index)
+gbm_preds_df = pd.DataFrame(preds_gbm, columns=['gbm_preds_df'], index=train_x.index)
+train_x = pd.concat((train_x, lasso_preds_df), axis=1)
+train_x = pd.concat((train_x, gbm_preds_df), axis=1)
+# 再使用RF训练
+model_rf = RandomForestRegressor(
+    n_estimators=2000,
+    max_depth=50,
+    max_features='sqrt',
+    min_samples_split=2,
+    min_samples_leaf=2)
+model_rf.fit(train_x, train_y)
+preds_rf = model_rf.predict(train_x)
+# predictions = pd.DataFrame({"rf":rf_preds, "y":train_y})
+# predictions.plot(x = "rf", y = "y", kind = "scatter")
+rmse_rf = np.sqrt(metrics.mean_squared_error(train_y, preds_rf))
+print('rmse_rf:', rmse_rf)
+# 预测
+preds_lasso_test = model_lasso.predict(test_x)
+preds_gbm_test = model_gbm.predict(test_x)
+lasso_preds_df_test = pd.DataFrame(preds_lasso_test, columns=['lasso_preds_df'], index=test_x.index)
+gbm_preds_df_test = pd.DataFrame(preds_gbm_test, columns=['gbm_preds_df'], index=test_x.index)
+test_x = pd.concat((test_x, lasso_preds_df_test), axis=1)
+test_x = pd.concat((test_x, gbm_preds_df_test), axis=1)
+preds_test = np.expm1(model_rf.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_test})
+result.to_csv("kaggle/housePrices/temp/lasso_gbm_rf_test_result.csv", index=False)
+
+
+# 问题集
+# 1.去掉价格的异常值
+# 2.画图配上坐标
+# 4.画上每个点的坐标
+# 5.K-近邻算法
+# 6.为什么做很详细的预处理之后预测不升反降？

@@ -69,29 +69,29 @@ test_data = pd.read_csv('kaggle/housePrices/dataset/test.csv')
 # SalePrice
 # data exploration
 # descriptive statistics summary
-# train_data['SalePrice'].describe()
+train_data['SalePrice'].describe()
 # histogram
-# sns.distplot(train_data['SalePrice'])
+sns.distplot(train_data['SalePrice'])
 #skewness and kurtosis
-# print("Skewness: %f" % train_data['SalePrice'].skew())
+print("Skewness: %f" % train_data['SalePrice'].skew())
 # Return unbiased kurtosis over requested axis using Fisher’s definition of kurtosis (kurtosis of normal == 0.0). Normalized by N-1
-# print("Kurtosis: %f" % train_data['SalePrice'].kurt())
+print("Kurtosis: %f" % train_data['SalePrice'].kurt())
 # Relationship with numerical variables
 # scatter plot grlivarea/saleprice
-# var = 'GrLivArea'
-# data = pd.concat([train_data['SalePrice'], train_data[var]], axis=1)
-# data.plot.scatter(x=var, y='SalePrice', ylim=(0,800000))
+var = 'GrLivArea'
+data = pd.concat([train_data['SalePrice'], train_data[var]], axis=1)
+data.plot.scatter(x=var, y='SalePrice', ylim=(0,800000))
 # scatter plot totalbsmtsf/saleprice
-# var = 'TotalBsmtSF'
-# data = pd.concat([train_data['SalePrice'], train_data[var]], axis=1)
-# data.plot.scatter(x=var, y='SalePrice', ylim=(0,800000))
+var = 'TotalBsmtSF'
+data = pd.concat([train_data['SalePrice'], train_data[var]], axis=1)
+data.plot.scatter(x=var, y='SalePrice', ylim=(0,800000))
 # Relationship with categorical features
 # box plot overallqual/saleprice
-# var = 'OverallQual'
-# data = pd.concat([train_data['SalePrice'], train_data[var]], axis=1)
-# f, ax = plt.subplots(figsize=(8, 6))
-# fig = sns.boxplot(x=var, y="SalePrice", data=data)
-# fig.axis(ymin=0, ymax=800000)
+var = 'OverallQual'
+data = pd.concat([train_data['SalePrice'], train_data[var]], axis=1)
+f, ax = plt.subplots(figsize=(8, 6))
+fig = sns.boxplot(x=var, y="SalePrice", data=data)
+fig.axis(ymin=0, ymax=800000)
 # box plot YearBuilt/saleprice
 # var = 'YearBuilt'
 # data = pd.concat([train_data['SalePrice'], train_data[var]], axis=1)
