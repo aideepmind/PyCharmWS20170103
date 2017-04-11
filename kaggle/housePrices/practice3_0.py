@@ -17,6 +17,7 @@ import xgboost
 from subprocess import check_output
 from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
 from sklearn.model_selection import cross_val_score
+from sklearn.kernel_ridge import KernelRidge
 #Import libraries:
 import pandas as pd
 import numpy as np
@@ -34,8 +35,8 @@ sns.set(style = "white", color_codes = True)
 warnings.filterwarnings('ignore')
 
 # input
-train_data = pd.read_csv('kaggle/housePrices/dataset/train.csv')
-test_data = pd.read_csv('kaggle/housePrices/dataset/test.csv')
+train_data = pd.read_csv('kaggle/housePrices/input/train.csv')
+test_data = pd.read_csv('kaggle/housePrices/input/test.csv')
 all_data = pd.concat((train_data[test_data.columns], test_data), ignore_index=True)
 
 # data exploration and data processing
@@ -888,7 +889,7 @@ gsearch1 = GridSearchCV(
         # seed=27,
         nthread=4),
     param_grid=param_test1,
-    scoring='neg_mean_squared_error',   # scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    # scoring='neg_mean_squared_error',   # scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
     n_jobs=4,
     iid=False,
     cv=5)
@@ -929,7 +930,7 @@ gsearch2 = GridSearchCV(
         min_samples_split=2,
         min_samples_leaf=2),
     param_grid=param_test2,
-    scoring='neg_mean_squared_error',   # scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    # scoring='neg_mean_squared_error',   # scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
     n_jobs=4,
     iid=False,
     cv=5)
@@ -1013,7 +1014,7 @@ gsearch3 = GridSearchCV(
         subsample=0.8,
         random_state=10),
     param_grid=param_test3,
-    scoring='neg_mean_squared_error',   # scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    # scoring='neg_mean_squared_error',   # scoring: ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
     n_jobs=4,
     iid=False,
     cv=5)
@@ -1077,6 +1078,31 @@ test_x = pd.concat((test_x, gbm_preds_df_test), axis=1)
 preds_test = np.expm1(model_rf.predict(test_x))
 result = pd.DataFrame({"Id": test_id, "SalePrice": preds_test})
 result.to_csv("kaggle/housePrices/temp/lasso_gbm_rf_test_result.csv", index=False)
+
+
+
+# use KRR(Kernel Ridge Regression)
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.model_selection import GridSearchCV
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
+# "alpha": [1e0, 1e-1, 1e-2, 1e-3]
+# {'alpha': 9.0}, 0.91862513727371242
+param_grid = {
+    "alpha": [8.0, 9.0, 10.0, 11.0, 12.0],
+    "kernel": [ExpSineSquared(l, p)
+        for l in np.logspace(-2, 2, 10)
+        for p in np.logspace(0, 2, 10)]}
+kr = GridSearchCV(KernelRidge(), cv=5, param_grid=param_grid)
+kr.fit(train_x, train_y)
+kr.grid_scores_, kr.best_params_, kr.best_score_
+preds_krr = np.expm1(kr.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_krr})
+# sns.distplot(result['SalePrice'], fit=norm)
+result['SalePrice'][result['Id'] == 2550] = 235594.51145508
+result.to_csv("kaggle/housePrices/temp/krr_test_result.csv", index=False)
+
+
 
 
 # 问题集

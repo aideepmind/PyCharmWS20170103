@@ -18,8 +18,8 @@ sns.set(style = "white", color_codes = True)
 warnings.filterwarnings('ignore')
 
 # input
-train_data = pd.read_csv('kaggle/housePrices/dataset/train.csv')
-test_data = pd.read_csv('kaggle/housePrices/dataset/test.csv')
+train_data = pd.read_csv('kaggle/housePrices/input/train.csv')
+test_data = pd.read_csv('kaggle/housePrices/input/test.csv')
 # data exploration and data processing
 def get_missing_cols(data):
     return data.columns[data.isnull().any()].tolist()

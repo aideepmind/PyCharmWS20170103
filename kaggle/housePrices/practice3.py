@@ -24,8 +24,8 @@ sns.set(style = "white", color_codes = True)
 warnings.filterwarnings('ignore')
 
 # input
-train_data = pd.read_csv('kaggle/housePrices/dataset/train.csv')
-test_data = pd.read_csv('kaggle/housePrices/dataset/test.csv')
+train_data = pd.read_csv('kaggle/housePrices/input/train.csv')
+test_data = pd.read_csv('kaggle/housePrices/input/test.csv')
 all_data = pd.concat((train_data[test_data.columns], test_data))
 
 # data exploration and data processing
@@ -452,7 +452,7 @@ all_data = all_data.replace({"Fence": {"GdPrv": 4, "MnPrv": 3, "GdWo": 2, "MnWw"
 
 # Neighborhood 通过K-Means来分类
 # 根据地址借助外部工具（www.addressreport.com）收集一些新的数据（Location,Cost_of_living,Income,Owners,Annual_property_tax,School,Crime,Ville）
-ngbr_details = pd.read_csv('kaggle/housePrices/dataset/neighborhood_details.csv')
+ngbr_details = pd.read_csv('kaggle/housePrices/input/neighborhood_details.csv')
 ngbr_details = ngbr_details.drop('Neighborhood_etiquette', axis=1)
 # 使用均值填充，但字符类型无法填充所以使用众数来填充
 ngbr_details = ngbr_details.fillna(ngbr_details.mean())

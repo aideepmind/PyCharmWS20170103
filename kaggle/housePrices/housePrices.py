@@ -63,8 +63,8 @@ def checkMissData(data):
 # 6 ensemble generation
 
 # read data
-train_data = pd.read_csv('kaggle/housePrices/dataset/train.csv')
-test_data = pd.read_csv('kaggle/housePrices/dataset/test.csv')
+train_data = pd.read_csv('kaggle/housePrices/input/train.csv')
+test_data = pd.read_csv('kaggle/housePrices/input/test.csv')
 
 # SalePrice
 # data exploration
