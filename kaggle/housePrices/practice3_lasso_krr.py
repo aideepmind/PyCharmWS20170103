@@ -542,6 +542,7 @@ kr.grid_scores_, kr.best_params_, kr.best_score_
 preds_krr = np.expm1(kr.predict(train_x))
 
 preds = 0.7 * preds_lasso + 0.3 * preds_krr
+# np.corrcoef(preds_krr, preds_lasso)
 # plt.scatter(preds_lasso, preds_krr)
 plt.scatter(preds, np.expm1(train_y))
 print(np.sqrt(metrics.mean_squared_error(train_y, preds_krr)))
@@ -550,3 +551,4 @@ print(np.sqrt(metrics.mean_squared_error(train_y, preds_krr)))
 # # sns.distplot(result_lasso_krr['SalePrice'], fit=norm)
 # result_lasso_krr['SalePrice'][result_lasso_krr['Id'] == 2550] = 235594.51145508
 # result_lasso_krr.to_csv("kaggle/housePrices/temp/lasso_krr_test_result.csv", index=False)
+

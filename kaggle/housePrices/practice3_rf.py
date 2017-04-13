@@ -142,7 +142,7 @@ def heatmap(columns):
     plt.figure()
     corrmat = train_data.corr()
     f, ax = plt.subplots(figsize=(12, 9))
-    # sns.heatmap(corrmat, vmax=.8, square=True);
+    # sns.heatmap(corrmat, vmax=.8, square=True)
     k = 10  # number of variables for heatmap
     cols = corrmat.nlargest(k, 'SalePrice')['SalePrice'].index
     cm = np.corrcoef(train_data[cols].values.T)
@@ -553,15 +553,37 @@ cols = len(all_data.columns)
 #  {'max_depth': 20, 'min_samples_split': 5},
 #  0.8823693674550974)
 param_grid_rf = {
-    'max_depth': [5, 20, 50],
-    'min_samples_split': [5, 10, 50]
+    'max_features': [100]
 }
 rf = GridSearchCV(
     estimator = RandomForestRegressor(
-        n_estimators=1000),
+        n_estimators=2000,
+        criterion="mse",
+        max_depth=20,
+        min_samples_split=3,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.,
+        max_features=200,
+        max_leaf_nodes=None,
+        min_impurity_split=1e-7,
+        bootstrap=True,
+        oob_score=False,
+        n_jobs=1,
+        random_state=None,
+        verbose=0,
+        warm_start=False),
     param_grid=param_grid_rf,
     n_jobs=4,
     iid=False,
     cv=5)
 rf.fit(train_x, train_y)
 rf.grid_scores_, rf.best_params_, rf.best_score_
+preds_rf = np.expm1(rf.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_rf})
+sns.distplot(result['SalePrice'], fit=norm)
+result.to_csv("kaggle/housePrices/temp/rf_test_result.csv", index=False)
+
+
+preds_rf = np.expm1(rf.predict(train_x))
+result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_rf})
+result.to_csv("kaggle/housePrices/temp/rf_train_result.csv", index=False)

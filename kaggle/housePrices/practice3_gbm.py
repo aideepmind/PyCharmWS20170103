@@ -711,17 +711,16 @@ cols = len(all_data.columns)
 
 # pd.DataFrame(train_x.columns).to_csv("kaggle/housePrices/temp/columns.csv", index=False)
 
-
-# 0.9118043495633193
+# 0.91249437305708692
 param_grid_gbm = {
-    'max_depth': [2, 3, 4, 5, 6]
+    'min_samples_split': [20]
 }
 gbm = GridSearchCV(
     estimator=GradientBoostingRegressor(
         n_estimators=500,
         learning_rate=0.1,
-        max_depth=3,
-        min_samples_split=2,
+        max_depth=2,
+        min_samples_split=20,
         min_samples_leaf=1,
         loss='ls',
         subsample=0.8,
@@ -742,10 +741,13 @@ gbm = GridSearchCV(
     iid=False,
     cv=5)
 gbm.fit(train_x, train_y)
-print('preds_gbm:', gbm.grid_scores_, gbm.best_params_, gbm.best_score_)
-preds_gbm = gbm.predict(train_x)
-plt.figure()
-plt.scatter(train_y, gbm.predict(train_x))
-plt.xlim([10, 14])
-plt.ylim([10, 14])
-print('preds_gbm:', np.sqrt(metrics.mean_squared_error(train_y, preds_gbm)))
+gbm.grid_scores_, gbm.best_params_, gbm.best_score_
+preds_gbm = np.expm1(gbm.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_gbm})
+sns.distplot(result['SalePrice'], fit=norm)
+result.to_csv("kaggle/housePrices/temp/gbm_test_result.csv", index=False)
+
+
+preds_gbm = np.expm1(gbm.predict(train_x))
+result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_gbm})
+result.to_csv("kaggle/housePrices/temp/gbm_train_result.csv", index=False)

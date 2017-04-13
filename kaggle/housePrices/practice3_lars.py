@@ -18,6 +18,11 @@ from subprocess import check_output
 from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
 from sklearn.model_selection import cross_val_score
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import ARDRegression
+from sklearn.linear_model import BayesianRidge
+from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import HuberRegressor
+from sklearn.linear_model import Lars
 #Import libraries:
 import pandas as pd
 import numpy as np
@@ -518,19 +523,22 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
 
 
-# "alpha": [1e0, 1e-1, 1e-2, 1e-3]
-# {'alpha': 9.0}, 0.91862513727371242
+# fit_intercept=True, verbose=False, normalize=True,
+#                  precompute='auto', n_nonzero_coefs=500,
+#                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
+#                  positive=False
+
+# 0.88310491311801531
 param_grid = {
-    "alpha": [9.0]}
-krr = GridSearchCV(KernelRidge(), cv=5, param_grid=param_grid)
-krr.fit(train_x, train_y)
-krr.grid_scores_, krr.best_params_, krr.best_score_
-preds_krr = np.expm1(krr.predict(test_x))
-result = pd.DataFrame({"Id": test_id, "SalePrice": preds_krr})
-# sns.distplot(result['SalePrice'], fit=norm)
-result.to_csv("kaggle/housePrices/temp/krr_test_result.csv", index=False)
+    "n_nonzero_coefs": [26]}
+lars = GridSearchCV(estimator=Lars(), cv=5, param_grid=param_grid)
+lars.fit(train_x, train_y)
+lars.grid_scores_, lars.best_params_, lars.best_score_
+preds_lars = np.expm1(lars.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_lars})
+sns.distplot(result['SalePrice'], fit=norm)
+result.to_csv("kaggle/housePrices/temp/lars_test_result.csv", index=False)
 
-
-preds_krr = np.expm1(krr.predict(train_x))
-result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_krr})
-result.to_csv("kaggle/housePrices/temp/krr_train_result.csv", index=False)
+preds_lars = np.expm1(lars.predict(train_x))
+result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_lars})
+result.to_csv("kaggle/housePrices/temp/lars_train_result.csv", index=False)

@@ -18,6 +18,7 @@ from subprocess import check_output
 from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
 from sklearn.model_selection import cross_val_score
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import ARDRegression
 #Import libraries:
 import pandas as pd
 import numpy as np
@@ -518,19 +519,22 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
 
 
-# "alpha": [1e0, 1e-1, 1e-2, 1e-3]
-# {'alpha': 9.0}, 0.91862513727371242
+# n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+#                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
+#                  threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
+#                  copy_X=True, verbose=False
+
+#  {'alpha_1': 1.1e-06},  0.90887821055507034
 param_grid = {
-    "alpha": [9.0]}
-krr = GridSearchCV(KernelRidge(), cv=5, param_grid=param_grid)
-krr.fit(train_x, train_y)
-krr.grid_scores_, krr.best_params_, krr.best_score_
-preds_krr = np.expm1(krr.predict(test_x))
-result = pd.DataFrame({"Id": test_id, "SalePrice": preds_krr})
+    "alpha_1": [1.1e-06]}
+ard = GridSearchCV(estimator=ARDRegression(), cv=5, param_grid=param_grid)
+ard.fit(train_x, train_y)
+ard.grid_scores_, ard.best_params_, ard.best_score_
+preds_ard = np.expm1(ard.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_ard})
 # sns.distplot(result['SalePrice'], fit=norm)
-result.to_csv("kaggle/housePrices/temp/krr_test_result.csv", index=False)
+result.to_csv("kaggle/housePrices/temp/ard_test_result.csv", index=False)
 
-
-preds_krr = np.expm1(krr.predict(train_x))
-result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_krr})
-result.to_csv("kaggle/housePrices/temp/krr_train_result.csv", index=False)
+preds_ard = np.expm1(ard.predict(train_x))
+result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_ard})
+result.to_csv("kaggle/housePrices/temp/ard_train_result.csv", index=False)

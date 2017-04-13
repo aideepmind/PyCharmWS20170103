@@ -18,6 +18,9 @@ from subprocess import check_output
 from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
 from sklearn.model_selection import cross_val_score
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import ARDRegression
+from sklearn.linear_model import BayesianRidge
+from sklearn.linear_model import ElasticNet
 #Import libraries:
 import pandas as pd
 import numpy as np
@@ -518,19 +521,22 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
 
 
-# "alpha": [1e0, 1e-1, 1e-2, 1e-3]
-# {'alpha': 9.0}, 0.91862513727371242
+# alpha=1.0, l1_ratio=0.5, fit_intercept=True,
+#                  normalize=False, precompute=False, max_iter=1000,
+#                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
+#                  random_state=None, selection='cyclic'
+
+#
 param_grid = {
-    "alpha": [9.0]}
-krr = GridSearchCV(KernelRidge(), cv=5, param_grid=param_grid)
-krr.fit(train_x, train_y)
-krr.grid_scores_, krr.best_params_, krr.best_score_
-preds_krr = np.expm1(krr.predict(test_x))
-result = pd.DataFrame({"Id": test_id, "SalePrice": preds_krr})
-# sns.distplot(result['SalePrice'], fit=norm)
-result.to_csv("kaggle/housePrices/temp/krr_test_result.csv", index=False)
+    "alpha": [0.001]}
+en = GridSearchCV(estimator=ElasticNet(), cv=5, param_grid=param_grid)
+en.fit(train_x, train_y)
+en.grid_scores_, en.best_params_, en.best_score_
+preds_en = np.expm1(en.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_en})
+sns.distplot(result['SalePrice'], fit=norm)
+result.to_csv("kaggle/housePrices/temp/en_test_result.csv", index=False)
 
-
-preds_krr = np.expm1(krr.predict(train_x))
-result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_krr})
-result.to_csv("kaggle/housePrices/temp/krr_train_result.csv", index=False)
+preds_en = np.expm1(en.predict(train_x))
+result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_en})
+result.to_csv("kaggle/housePrices/temp/en_train_result.csv", index=False)

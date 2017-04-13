@@ -18,6 +18,14 @@ from subprocess import check_output
 from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
 from sklearn.model_selection import cross_val_score
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import ARDRegression
+from sklearn.linear_model import BayesianRidge
+from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import HuberRegressor
+from sklearn.linear_model import Lars
+from sklearn.linear_model import LassoLars
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 #Import libraries:
 import pandas as pd
 import numpy as np
@@ -518,19 +526,20 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
 
 
-# "alpha": [1e0, 1e-1, 1e-2, 1e-3]
-# {'alpha': 9.0}, 0.91862513727371242
+# penalty='l2', dual=False, tol=1e-4, C=1.0,
+#                  fit_intercept=True, intercept_scaling=1, class_weight=None,
+#                  random_state=None, solver='liblinear', max_iter=100,
+#                  multi_class='ovr', verbose=0, warm_start=False, n_jobs=1
+
+# 0.90253341005566601
 param_grid = {
-    "alpha": [9.0]}
-krr = GridSearchCV(KernelRidge(), cv=5, param_grid=param_grid)
-krr.fit(train_x, train_y)
-krr.grid_scores_, krr.best_params_, krr.best_score_
-preds_krr = np.expm1(krr.predict(test_x))
-result = pd.DataFrame({"Id": test_id, "SalePrice": preds_krr})
-# sns.distplot(result['SalePrice'], fit=norm)
-result.to_csv("kaggle/housePrices/temp/krr_test_result.csv", index=False)
-
-
-preds_krr = np.expm1(krr.predict(train_x))
-result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_krr})
-result.to_csv("kaggle/housePrices/temp/krr_train_result.csv", index=False)
+    "penalty": [1.0],
+    "tol": [0.01],
+    "C": [1.0]}
+logistic = GridSearchCV(estimator=LogisticRegression(), cv=5, param_grid=param_grid)
+logistic.fit(train_x, train_y)
+logistic.grid_scores_, logistic.best_params_, logistic.best_score_
+preds_logistic = np.expm1(logistic.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_logistic})
+sns.distplot(result['SalePrice'], fit=norm)
+result.to_csv("kaggle/housePrices/temp/logistic_test_result.csv", index=False)

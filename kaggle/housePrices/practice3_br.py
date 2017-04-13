@@ -18,6 +18,8 @@ from subprocess import check_output
 from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
 from sklearn.model_selection import cross_val_score
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import ARDRegression
+from sklearn.linear_model import BayesianRidge
 #Import libraries:
 import pandas as pd
 import numpy as np
@@ -518,19 +520,21 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
 
 
-# "alpha": [1e0, 1e-1, 1e-2, 1e-3]
-# {'alpha': 9.0}, 0.91862513727371242
+# n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+#                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
+#                  fit_intercept=True, normalize=False, copy_X=True,
+#                  verbose=False
+
 param_grid = {
-    "alpha": [9.0]}
-krr = GridSearchCV(KernelRidge(), cv=5, param_grid=param_grid)
-krr.fit(train_x, train_y)
-krr.grid_scores_, krr.best_params_, krr.best_score_
-preds_krr = np.expm1(krr.predict(test_x))
-result = pd.DataFrame({"Id": test_id, "SalePrice": preds_krr})
+    "alpha_1": [1.e-6]}
+br = GridSearchCV(estimator=BayesianRidge(), cv=5, param_grid=param_grid)
+br.fit(train_x, train_y)
+br.grid_scores_, br.best_params_, br.best_score_
+preds_br = np.expm1(br.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_br})
 # sns.distplot(result['SalePrice'], fit=norm)
-result.to_csv("kaggle/housePrices/temp/krr_test_result.csv", index=False)
+result.to_csv("kaggle/housePrices/temp/br_test_result.csv", index=False)
 
-
-preds_krr = np.expm1(krr.predict(train_x))
-result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_krr})
-result.to_csv("kaggle/housePrices/temp/krr_train_result.csv", index=False)
+preds_br = np.expm1(br.predict(train_x))
+result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_br})
+result.to_csv("kaggle/housePrices/temp/br_train_result.csv", index=False)

@@ -18,10 +18,14 @@ from subprocess import check_output
 from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, LassoCV, LassoLarsCV
 from sklearn.model_selection import cross_val_score
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import ARDRegression
+from sklearn.linear_model import BayesianRidge
+from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import HuberRegressor
 #Import libraries:
 import pandas as pd
 import numpy as np
-import xgboost as xgb
+# import xgboost as xgb
 from xgboost.sklearn import XGBRegressor
 from sklearn import cross_validation, metrics   #Additional     scklearn functions
 from sklearn.grid_search import GridSearchCV   #Perforing grid search
@@ -518,19 +522,37 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
 
 
-# "alpha": [1e0, 1e-1, 1e-2, 1e-3]
-# {'alpha': 9.0}, 0.91862513727371242
+# epsilon=1.35, max_iter=100, alpha=0.0001,
+#                  warm_start=False, fit_intercept=True, tol=1e-05
+
+# 0.91705473643761137
 param_grid = {
-    "alpha": [9.0]}
-krr = GridSearchCV(KernelRidge(), cv=5, param_grid=param_grid)
-krr.fit(train_x, train_y)
-krr.grid_scores_, krr.best_params_, krr.best_score_
-preds_krr = np.expm1(krr.predict(test_x))
-result = pd.DataFrame({"Id": test_id, "SalePrice": preds_krr})
-# sns.distplot(result['SalePrice'], fit=norm)
-result.to_csv("kaggle/housePrices/temp/krr_test_result.csv", index=False)
+    'learning_rate': [0.08]}
+xgb = GridSearchCV(
+    estimator=XGBRegressor(
+        n_estimators=1000,
+        learning_rate=0.08,
+        max_depth=2,
+        min_child_weight=1,
+        gamma=0,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        objective='reg:linear',
+        # scale_pos_weight=1,
+        # seed=27,
+        nthread=4),
+    param_grid=param_grid,
+    n_jobs=4,
+    iid=False,
+    cv=5)
+xgb.fit(train_x, train_y)
+xgb.grid_scores_, xgb.best_params_, xgb.best_score_
+preds_xgb = np.expm1(xgb.predict(test_x))
+result = pd.DataFrame({"Id": test_id, "SalePrice": preds_xgb})
+sns.distplot(result['SalePrice'], fit=norm)
+result.to_csv("kaggle/housePrices/temp/xgb_test_result.csv", index=False)
 
 
-preds_krr = np.expm1(krr.predict(train_x))
-result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_krr})
-result.to_csv("kaggle/housePrices/temp/krr_train_result.csv", index=False)
+preds_xgb = np.expm1(xgb.predict(train_x))
+result = pd.DataFrame({"Id": train_data['Id'], "SalePrice": preds_xgb})
+result.to_csv("kaggle/housePrices/temp/xgb_train_result.csv", index=False)
