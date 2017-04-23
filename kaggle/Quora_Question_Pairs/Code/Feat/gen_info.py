@@ -44,9 +44,9 @@ def gen_info(feat_path_name):
     dfTest_original = pd.read_csv(config.original_test_data_path).fillna("")
     ## insert fake label for test
     dfTest_original["median_relevance"] = np.ones((dfTest_original.shape[0]))
-    dfTest_original["relevance_variance"] = np.zeros((dfTest_original.shape[0]))
+    # dfTest_original["relevance_variance"] = np.zeros((dfTest_original.shape[0]))
     # change it to zero-based for classification
-    Y = dfTrain_original["median_relevance"].values - 1
+    Y = dfTrain_original["median_relevance"].values
 
     ## load pre-defined stratified k-fold index
     with open("%s/stratifiedKFold.%s.pkl" % (config.data_folder, config.stratified_label), "rb") as f:
@@ -68,13 +68,13 @@ def gen_info(feat_path_name):
             ##########################
             ## get and dump weights ##
             ##########################
-            raise_to = 0.5
-            var = dfTrain["relevance_variance"].values
-            max_var = np.max(var[trainInd]**raise_to)
-            weight = (1 + np.power(((max_var - var**raise_to) / max_var),1)) / 2.
-            #weight = (max_var - var**raise_to) / max_var
-            np.savetxt("%s/train.feat.weight" % path, weight[trainInd], fmt="%.6f")
-            np.savetxt("%s/valid.feat.weight" % path, weight[validInd], fmt="%.6f")
+            # raise_to = 0.5
+            # var = dfTrain["relevance_variance"].values
+            # max_var = np.max(var[trainInd]**raise_to)
+            # weight = (1 + np.power(((max_var - var**raise_to) / max_var),1)) / 2.
+            # # weight = (max_var - var**raise_to) / max_var, weight 在 1/2 和 1 之间，方差（多位rater进行打分不一致所产生的）越大，权重越小，当方差为0时，权重为1
+            # np.savetxt("%s/train.feat.weight" % path, weight[trainInd], fmt="%.6f")
+            # np.savetxt("%s/valid.feat.weight" % path, weight[validInd], fmt="%.6f")
 
             #############################    
             ## get and dump group info ##
@@ -85,8 +85,8 @@ def gen_info(feat_path_name):
             ######################
             ## get and dump cdf ##
             ######################
-            hist = np.bincount(Y[trainInd])
-            overall_cdf_valid = np.cumsum(hist) / float(sum(hist))
+            hist = np.bincount(Y[trainInd])  # 统计数出现的频率，类似直方图hist
+            overall_cdf_valid = np.cumsum(hist) / float(sum(hist))  # CDF（cumulative distribution function）累积分布函数
             np.savetxt("%s/valid.cdf" % path, overall_cdf_valid)
                 
             #############################
@@ -100,10 +100,11 @@ def gen_info(feat_path_name):
     path = "%s/%s/All" % (config.feat_folder, feat_path_name)
     if not os.path.exists(path):
         os.makedirs(path)
-    ## weight
-    max_var = np.max(var**raise_to)
-    weight = (1 + np.power(((max_var - var**raise_to) / max_var),1)) / 2.
-    np.savetxt("%s/train.feat.weight" % path, weight, fmt="%.6f")
+
+    # ## weight
+    # max_var = np.max(var**raise_to)
+    # weight = (1 + np.power(((max_var - var**raise_to) / max_var),1)) / 2.
+    # np.savetxt("%s/train.feat.weight" % path, weight, fmt="%.6f")
     
     ## group
     np.savetxt("%s/%s/All/train.feat.group" % (config.feat_folder, feat_path_name), [dfTrain.shape[0]], fmt="%d")

@@ -418,7 +418,7 @@ if __name__ == "__main__":
 
     ## for fitting common vocabulary
     def cat_text(x):
-        res = '%s %s %s' % (x['question1'], x['question2'])
+        res = '%s %s' % (x['question1'], x['question2'])
         return res
     dfTrain["all_text"] = list(dfTrain.apply(cat_text, axis=1))
     dfTest["all_text"] = list(dfTest.apply(cat_text, axis=1))

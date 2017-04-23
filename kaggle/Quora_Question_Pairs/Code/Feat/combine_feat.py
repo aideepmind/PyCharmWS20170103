@@ -109,10 +109,10 @@ def combine_feat(feat_names, feat_path_name):
             # train
             info_train = pd.read_csv("%s/train.info" % (save_path))
             ## change it to zero-based for multi-classification in xgboost
-            Y_train = info_train["median_relevance"] - 1 
+            Y_train = info_train["is_duplicate"]
             # valid               
             info_valid = pd.read_csv("%s/valid.info" % (save_path))
-            Y_valid = info_valid["median_relevance"] - 1
+            Y_valid = info_valid["is_duplicate"]
 
             ## dump feat
             dump_svmlight_file(X_train, Y_train, "%s/train.feat" % (save_path))
@@ -170,11 +170,11 @@ def combine_feat(feat_names, feat_path_name):
     # train
     info_train = pd.read_csv("%s/train.info" % (save_path))
     ## change it to zero-based for multi-classification in xgboost
-    Y_train = info_train["median_relevance"] - 1 
+    Y_train = info_train["is_duplicate"]
     # test               
     info_test = pd.read_csv("%s/test.info" % (save_path))
-    Y_test = info_test["median_relevance"] - 1
+    Y_test = info_test["is_duplicate"]
 
     ## dump feat
-    dump_svmlight_file(X_train, Y_train, "%s/train.feat" % (save_path))
+    dump_svmlight_file(X_train, Y_train, "%s/train.feat" % (save_path)) # Dump the dataset in svmlight / libsvm file format
     dump_svmlight_file(X_test, Y_test, "%s/test.feat" % (save_path))
