@@ -55,7 +55,7 @@ os.system(cmd)
 ## Combine Feature ##
 #####################
 #### combine feat
-cmd = "python ./combine_feat_[LSA_and_stats_feat_Jun09]_[Low].py"
+cmd = "python ./combine_feat_[LSA_and_stats_feat_Apr09]_[Low].py"
 os.system(cmd)
 
 #### combine feat

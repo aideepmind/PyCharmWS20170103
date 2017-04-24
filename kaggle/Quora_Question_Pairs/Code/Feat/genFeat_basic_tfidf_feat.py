@@ -176,13 +176,13 @@ def extract_feat(path, dfTrain, dfTest, mode, feat_names, column_names):
         for j in range(i+1,len(feat_names)):
             print("generate common %s cosine sim feat for %s and %s" % (vec_type, feat_names[i], feat_names[j]))
             for mod in ["train", mode]:
-                with open("%s/%s.%s.feat.pkl" % (path, mod, feat_names[i]), "rb") as f:  # path/train_feat_names_common_svd
+                with open("%s/%s.%s.feat.pkl" % (path, mod, feat_names[i]), "rb") as f:
                     target_vec = dill.load(f)
                 with open("%s/%s.%s.feat.pkl" % (path, mod, feat_names[j]), "rb") as f:
                     obs_vec = dill.load(f)
-                sim = np.asarray(map(cosine_sim, target_vec, obs_vec))[:,np.newaxis]    # similarity
+                sim = np.asarray(map(cosine_sim, target_vec, obs_vec))[:,np.newaxis]    # sim: similarity, np.newaxis: add new dim
                 ## dump feat
-                with open("%s/%s.%s_%s_%s_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type), "wb") as f:
+                with open("%s/%s.%s_%s_%s_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type), "wb") as f:   # path/mod_feat_names_feat_names_vec_type_cosine_sim
                     dill.dump(sim, f, -1)
             ## update feat names
             new_feat_names.append( "%s_%s_%s_cosine_sim" % (feat_names[i], feat_names[j], vec_type))
@@ -426,7 +426,7 @@ if __name__ == "__main__":
     for vec_type in vec_types:
         ## save feat names
         feat_names = [ "question1", "question2" ]
-        feat_names = [ name+"_%s_%s_vocabulary" % (vec_type, vocabulary_type) for name in feat_names ]  # eg. [query_tfidf_common_vocabulary, ...]
+        feat_names = [ name+"_%s_%s_vocabulary" % (vec_type, vocabulary_type) for name in feat_names ]  # eg. [question1_tfidf_common_vocabulary, ...]
         ## file to save feat names
         feat_name_file = "%s/basic_%s_and_cosine_sim.feat_name" % (config.feat_folder, vec_type)
 

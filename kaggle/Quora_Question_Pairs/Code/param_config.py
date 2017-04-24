@@ -52,7 +52,7 @@ class ParamConfig:
         ## nlp related
         self.drop_html_flag = drop_html_flag
         self.basic_tfidf_ngram_range = basic_tfidf_ngram_range  #
-        self.basic_tfidf_vocabulary_type = basic_tfidf_vocabulary_type  #
+        self.basic_tfidf_vocabulary_type = basic_tfidf_vocabulary_type  # 词汇类型
         self.cooccurrence_tfidf_ngram_range = cooccurrence_tfidf_ngram_range  #
         self.cooccurrence_word_exclude_stopword = cooccurrence_word_exclude_stopword
         self.stemmer_type = stemmer_type
