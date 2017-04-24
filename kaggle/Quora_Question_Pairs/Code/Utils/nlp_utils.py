@@ -43,7 +43,10 @@ def stem_tokens(tokens, stemmer):
     for token in tokens:
         stemmed.append(stemmer.stem(token))
     return stemmed
-	
+
+if __name__ == '__main__':
+    stem_tokens(['aed'], english_stemmer)
+
 
 #############
 ## POS Tag ##

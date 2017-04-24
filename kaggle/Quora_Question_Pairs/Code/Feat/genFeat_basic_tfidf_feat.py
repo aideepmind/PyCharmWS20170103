@@ -72,7 +72,7 @@ def cosine_sim(x, y):
 def generate_dist_stats_feat(metric, X_train, ids_train, X_test, ids_test, indices_dict, qids_test=None):
     if metric == "cosine":  # 余弦
         stats_feat = 0 * np.ones((len(ids_test), stats_feat_num*config.n_classes), dtype=float)
-        sim = 1. - pairwise_distances(X_test, X_train, metric=metric, n_jobs=1)
+        sim = 1. - pairwise_distances(X_test, X_train, metric=metric, n_jobs=1) # vector X_test(n*1) and vector X_train(m*1) -> matrix(n*m)
     elif metric == "euclidean": # 欧氏
         stats_feat = -1 * np.ones((len(ids_test), stats_feat_num*config.n_classes), dtype=float)
         sim = pairwise_distances(X_test, X_train, metric=metric, n_jobs=1)

@@ -31,8 +31,8 @@ os.system(cmd)
 ## Generate features ##
 #######################
 #### query id
-cmd = "python ./genFeat_id_feat.py"
-os.system(cmd)
+# cmd = "python ./genFeat_id_feat.py"
+# os.system(cmd)
 
 #### counting feat
 cmd = "python ./genFeat_counting_feat.py"

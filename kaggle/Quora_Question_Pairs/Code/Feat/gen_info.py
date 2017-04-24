@@ -109,10 +109,11 @@ def gen_info(feat_path_name):
     ## group
     np.savetxt("%s/%s/All/train.feat.group" % (config.feat_folder, feat_path_name), [dfTrain.shape[0]], fmt="%d")
     np.savetxt("%s/%s/All/test.feat.group" % (config.feat_folder, feat_path_name), [dfTest.shape[0]], fmt="%d")
-    ## cdf
+    ## cdf 这个地方需要改动，因为Train Set与Test Set的正反例比例不一致，是线性下降的，如果修改代码呢？
     hist_full = np.bincount(Y)
     print (hist_full) / float(sum(hist_full))
     overall_cdf_full = np.cumsum(hist_full) / float(sum(hist_full))
+    # overall_cdf_full = [0.835, 1.0]
     np.savetxt("%s/%s/All/test.cdf" % (config.feat_folder, feat_path_name), overall_cdf_full)
     ## info        
     dfTrain_original.to_csv("%s/%s/All/train.info" % (config.feat_folder, feat_path_name), index=False, header=True)

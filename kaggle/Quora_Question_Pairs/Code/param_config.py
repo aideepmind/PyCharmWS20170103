@@ -37,7 +37,7 @@ class ParamConfig:
         ## CV params
         self.n_runs = 3
         self.n_folds = 3
-        self.stratified_label = "query"
+        self.stratified_label = "duplicate"
 
         ## path
         self.data_folder = "../../Data"
