@@ -264,14 +264,15 @@ def softkappaObj(preds, dtrain, hess_scale=0.000125):
 #### decoding method for ranking and regression
 def getScore(pred, cdf, valid=False):
     num = pred.shape[0]
-    output = np.asarray([4]*num, dtype=int)
-    rank = pred.argsort()
+    output = np.asarray([1]*num, dtype=int)
+    rank = pred.argsort()   # argsort: 获取排序的索引，但索引本身不排序
     # cdf: [7.348703170028818288e-02 2.256484149855907673e-01 3.881844380403458028e-01 1.000000000000000000e+00]
-    output[rank[:int(num*cdf[0]-1)]] = 1    # 让前cdf%为1，减去1是index从0开始
-    output[rank[int(num*cdf[0]):int(num*cdf[1]-1)]] = 2
-    output[rank[int(num*cdf[1]):int(num*cdf[2]-1)]] = 3
+    # output[rank[:int(num*cdf[0]-1)]] = 1    # 让前cdf%为1，减去1是index从0开始
+    # output[rank[int(num*cdf[0]):int(num*cdf[1]-1)]] = 2
+    # output[rank[int(num*cdf[1]):int(num*cdf[2]-1)]] = 3
+    output[rank[:int(num * cdf[0] - 1)]] = 0  # 让前cdf%为1，减去1是index从0开始
     if valid:
-        cutoff = [ pred[rank[int(num*cdf[i]-1)]] for i in range(3) ]
+        cutoff = [ pred[rank[int(num*cdf[i]-1)]] for i in range(1) ]
         return output, cutoff
     return output
 
@@ -291,7 +292,7 @@ def getTestScore(pred, cutoff):
 #### decoding method for four class probabilities (e.g., softmax classification)
 def getClfScore(preds, cdf):
     w = np.asarray(np.arange(1,config.n_classes+1))
-    preds = preds * w[np.newaxis,:]
+    preds = preds * w[np.newaxis,:] # nx1 * 1x4 = nx4
     preds = np.sum(preds, axis=1)
     output = getScore(preds, cdf)
     output = np.asarray(output, dtype=int)

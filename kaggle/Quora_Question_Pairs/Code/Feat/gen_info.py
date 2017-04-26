@@ -92,8 +92,8 @@ def gen_info(feat_path_name):
             #############################
             ## dump all the other info ##
             #############################
-            dfTrain_original.iloc[trainInd].to_csv("%s/train.info" % path, index=False, header=True)
-            dfTrain_original.iloc[validInd].to_csv("%s/valid.info" % path, index=False, header=True)
+            dfTrain_original.iloc[trainInd].to_csv("%s/train.info" % path, index=False, header=True, encoding='utf-8')
+            dfTrain_original.iloc[validInd].to_csv("%s/valid.info" % path, index=False, header=True, encoding='utf-8')
     print("Done.")
 
     print("For training and testing...")

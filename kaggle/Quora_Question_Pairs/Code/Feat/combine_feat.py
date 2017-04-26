@@ -70,6 +70,13 @@ def combine_feat(feat_names, feat_path_name):
 
                 ## load train feat
                 feat_train_file = "%s/train.%s.feat.pkl" % (path, feat_name)
+
+                if not os.path.exists(feat_train_file):
+                    print('not exist file: ', feat_train_file)
+                    continue
+                else:
+                    print('exist file: ', feat_train_file)
+
                 with open(feat_train_file, "rb") as f:
                     x_train = pickle.load(f)
                 if len(x_train.shape) == 1:
@@ -107,11 +114,11 @@ def combine_feat(feat_names, feat_path_name):
 
             ## load label
             # train
-            info_train = pd.read_csv("%s/train.info" % (save_path))
+            info_train = pd.read_csv("%s/train.info" % (save_path), encoding='utf-8')
             ## change it to zero-based for multi-classification in xgboost
             Y_train = info_train["is_duplicate"]
-            # valid               
-            info_valid = pd.read_csv("%s/valid.info" % (save_path))
+            # valid
+            info_valid = pd.read_csv("%s/valid.info" % (save_path), encoding='utf-8')
             Y_valid = info_valid["is_duplicate"]
 
             ## dump feat
@@ -131,6 +138,13 @@ def combine_feat(feat_names, feat_path_name):
 
         ## load train feat
         feat_train_file = "%s/train.%s.feat.pkl" % (path, feat_name)
+
+        if not os.path.exists(feat_train_file):
+            print('not exist file: ', feat_train_file)
+            continue
+        else:
+            print('exist file: ', feat_train_file)
+
         with open(feat_train_file, "rb") as f:
             x_train = pickle.load(f)
         if len(x_train.shape) == 1:

@@ -93,7 +93,10 @@ def extract_feat(df):
     join_str = "_"
     df["question1_trigram"] = list(df.apply(lambda x: ngram.getTrigram(x["question1_unigram"], join_str), axis=1))
     df["question2_trigram"] = list(df.apply(lambda x: ngram.getTrigram(x["question2_unigram"], join_str), axis=1))
-
+    try:
+        print()
+    except:
+        print()
 
     ################################
     ## word count and digit count ##
@@ -105,13 +108,13 @@ def extract_feat(df):
     for feat_name in feat_names:
         for gram in grams:
             ## word count 单词数量
-            df["count_of_%s_%s"%(feat_name,gram)] = list(df.apply(lambda x: len(x[feat_name+"_"+gram]), axis=1))
-            df["count_of_unique_%s_%s"%(feat_name, gram)] = list(df.apply(lambda x: len(set(x[feat_name+"_"+gram])), axis=1))
-            df["ratio_of_unique_%s_%s"%(feat_name, gram)] = list(map(try_divide, df["count_of_unique_%s_%s"%(feat_name,gram)], df["count_of_%s_%s"%(feat_name,gram)]))
+            df["count_of_%s_%s"%(feat_name,gram)] = list(df.apply(lambda x: len(x[feat_name+"_"+gram]), axis=1))    # 单词数量
+            df["count_of_unique_%s_%s"%(feat_name, gram)] = list(df.apply(lambda x: len(set(x[feat_name+"_"+gram])), axis=1))   # 不重复单词数量
+            df["ratio_of_unique_%s_%s"%(feat_name, gram)] = list(map(try_divide, df["count_of_unique_%s_%s"%(feat_name,gram)], df["count_of_%s_%s"%(feat_name,gram)]))  # 不重复单词占比
 
         ## digit count 数字数量
-        df["count_of_digit_in_%s"%feat_name] = list(df.apply(lambda x: count_digit(x[feat_name+"_unigram"]), axis=1))
-        df["ratio_of_digit_in_%s"%feat_name] = list(map(try_divide, df["count_of_digit_in_%s"%feat_name], df["count_of_%s_unigram"%(feat_name)]))
+        df["count_of_digit_in_%s"%feat_name] = list(df.apply(lambda x: count_digit(x[feat_name+"_unigram"]), axis=1))   # 数字数量
+        df["ratio_of_digit_in_%s"%feat_name] = list(map(try_divide, df["count_of_digit_in_%s"%feat_name], df["count_of_%s_unigram"%(feat_name)]))   # 数字占比
 
 
     ##############################
@@ -124,8 +127,8 @@ def extract_feat(df):
             for target_name in feat_names:
                 if target_name != obs_name:
                     ## query
-                    df["count_of_%s_%s_in_%s"%(obs_name, gram, target_name)] = list(df.apply(lambda x: sum([1. for w in x[obs_name+"_"+gram] if w in set(x[target_name+"_"+gram])]), axis=1))
-                    df["ratio_of_%s_%s_in_%s"%(obs_name, gram, target_name)] = list(map(try_divide, df["count_of_%s_%s_in_%s"%(obs_name,gram,target_name)], df["count_of_%s_%s"%(obs_name,gram)]))
+                    df["count_of_%s_%s_in_%s"%(obs_name, gram, target_name)] = list(df.apply(lambda x: sum([1. for w in x[obs_name+"_"+gram] if w in set(x[target_name+"_"+gram])]), axis=1))   # 两特征单词相交的数量
+                    df["ratio_of_%s_%s_in_%s"%(obs_name, gram, target_name)] = list(map(try_divide, df["count_of_%s_%s_in_%s"%(obs_name,gram,target_name)], df["count_of_%s_%s"%(obs_name,gram)]))   # 两特征单词相交的数量占比
 
 
     ######################################
@@ -136,7 +139,7 @@ def extract_feat(df):
         for target_name in feat_names:
             for obs_name in feat_names:
                 if target_name != obs_name:
-                    pos = list(df.apply(lambda x: get_position_list(x[target_name+"_"+gram], obs=x[obs_name+"_"+gram]), axis=1))
+                    pos = list(df.apply(lambda x: get_position_list(x[target_name+"_"+gram], obs=x[obs_name+"_"+gram]), axis=1))    # obs单词在target中的位置
                     ## stats feat on pos
                     df["pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = list(map(np.min, pos))
                     df["pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)] = list(map(np.mean, pos))

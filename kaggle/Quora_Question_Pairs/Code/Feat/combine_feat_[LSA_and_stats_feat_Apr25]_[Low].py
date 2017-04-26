@@ -2,7 +2,7 @@
 """
 __file__
     
-    combine_feat_[LSA_and_stats_feat_Apr09]_[Low].py
+    combine_feat_[LSA_and_stats_feat_Apr25]_[Low].py
 
 __description__
 
@@ -199,5 +199,5 @@ if __name__ == "__main__":
 
     ]
 
-    gen_info(feat_path_name="LSA_and_stats_feat_Apr09")
-    combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_Apr09")
+    gen_info(feat_path_name="LSA_and_stats_feat_Apr25")
+    combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_Apr25")

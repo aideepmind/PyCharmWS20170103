@@ -32,7 +32,7 @@ class ParamConfig:
                  stemmer_type="snowball",
                  count_feat_transform=np.sqrt):
     
-        self.n_classes = 4
+        self.n_classes = 2
 
         ## CV params
         self.n_runs = 3
