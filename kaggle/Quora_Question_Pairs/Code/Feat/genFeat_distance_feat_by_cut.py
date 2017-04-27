@@ -121,25 +121,44 @@ def preprocess_data(line, token_pattern=token_pattern,
 ## Extract basic distance features ##
 #####################################
 def extract_basic_distance_feat(df):
-    ## unigram
-    print("generate unigram")
-    df["question1_unigram"] = list(df.apply(lambda x: preprocess_data(x["question1"]), axis=1))
-    df["question2_unigram"] = list(df.apply(lambda x: preprocess_data(x["question2"]), axis=1))
-    ## bigram
-    print("generate bigram")
-    join_str = "_"
-    df["question1_bigram"] = list(df.apply(lambda x: ngram.getBigram(x["question1_unigram"], join_str), axis=1))
-    df["question2_bigram"] = list(df.apply(lambda x: ngram.getBigram(x["question2_unigram"], join_str), axis=1))
-    ## trigram
-    print("generate trigram")
-    join_str = "_"
-    df["question1_trigram"] = list(df.apply(lambda x: ngram.getTrigram(x["question1_unigram"], join_str), axis=1))
-    df["question2_trigram"] = list(df.apply(lambda x: ngram.getTrigram(x["question2_unigram"], join_str), axis=1))
+    # ## unigram
+    # print("generate unigram")
+    # df["question1_unigram"] = list(df.apply(lambda x: preprocess_data(x["question1"]), axis=1))
+    # df["question2_unigram"] = list(df.apply(lambda x: preprocess_data(x["question2"]), axis=1))
+    # ## bigram
+    # print("generate bigram")
+    # join_str = "_"
+    # df["question1_bigram"] = list(df.apply(lambda x: ngram.getBigram(x["question1_unigram"], join_str), axis=1))
+    # df["question2_bigram"] = list(df.apply(lambda x: ngram.getBigram(x["question2_unigram"], join_str), axis=1))
+    # ## trigram
+    # print("generate trigram")
+    # join_str = "_"
+    # df["question1_trigram"] = list(df.apply(lambda x: ngram.getTrigram(x["question1_unigram"], join_str), axis=1))
+    # df["question2_trigram"] = list(df.apply(lambda x: ngram.getTrigram(x["question2_unigram"], join_str), axis=1))
+
+    # with open("%s/test.%s.feat.pkl" % ("%s/All" % config.feat_folder, 'question1_unigram'), "rb") as f:
+    #     df["question1_unigram"] = dill.load(f)
+    #     print('load question1_unigram')
+    # with open("%s/test.%s.feat.pkl" % ("%s/All" % config.feat_folder, 'question2_unigram'), "rb") as f:
+    #     df["question2_unigram"] = dill.load(f)
+    #     print('load question2_unigram')
+    # with open("%s/test.%s.feat.pkl" % ("%s/All" % config.feat_folder, 'question1_bigram'), "rb") as f:
+    #     df["question1_bigram"] = dill.load(f)
+    #     print('load question1_bigram')
+    # with open("%s/test.%s.feat.pkl" % ("%s/All" % config.feat_folder, 'question2_bigram'), "rb") as f:
+    #     df["question2_bigram"] = dill.load(f)
+    #     print('load question2_bigram')
+    with open("%s/test.%s.feat.pkl" % ("%s/All" % config.feat_folder, 'question1_trigram'), "rb") as f:
+        df["question1_trigram"] = dill.load(f)
+        print('load question1_trigram')
+    with open("%s/test.%s.feat.pkl" % ("%s/All" % config.feat_folder, 'question2_trigram'), "rb") as f:
+        df["question2_trigram"] = dill.load(f)
+        print('load question2_trigram')
 
     ## jaccard coef/dice dist of n-gram
     print("generate jaccard coef and dice dist for n-gram")
     dists = ["jaccard_coef", "dice_dist"]
-    grams = ["unigram", "bigram", "trigram"]
+    grams = ["trigram"]# , "bigram", "trigram"
     feat_names = ["question1", "question2"]
     for dist in dists:
         for gram in grams:
@@ -147,8 +166,11 @@ def extract_basic_distance_feat(df):
                 for j in range(i+1,len(feat_names)):
                     target_name = feat_names[i]
                     obs_name = feat_names[j]
-                    df["%s_of_%s_between_%s_%s"%(dist,gram,target_name,obs_name)] = \
-                            list(df.apply(lambda x: compute_dist(x[target_name+"_"+gram], x[obs_name+"_"+gram], dist), axis=1))
+                    between = list(df.apply(lambda x: compute_dist(x[target_name+"_"+gram], x[obs_name+"_"+gram], dist), axis=1))
+                    with open("%s/test.%s_of_%s_between_%s_%s.feat.pkl" % (
+                        "%s/All" % config.feat_folder, dist,gram,target_name,obs_name),
+                              "wb") as f:
+                        dill.dump(between, f, -1)
 
 
 ###########################################
@@ -232,19 +254,19 @@ if __name__ == "__main__":
     ## Load Data ##
     ###############
     ## load data
-    with open(config.processed_train_data_path, "rb") as f:
-        dfTrain = dill.load(f)
-    with open(config.processed_test_data_path, "rb") as f:
-        dfTest = dill.load(f)
+    # with open(config.processed_train_data_path, "rb") as f:
+    #     dfTrain = dill.load(f)
+    # with open(config.processed_test_data_path, "rb") as f:
+    #     dfTest = dill.load(f)
     ## load pre-defined stratified k-fold index
-    with open("%s/stratifiedKFold.%s.pkl" % (config.data_folder, config.stratified_label), "rb") as f:
-            skf = pickle.load(f)
+    # with open("%s/stratifiedKFold.%s.pkl" % (config.data_folder, config.stratified_label), "rb") as f:
+    #         skf = pickle.load(f)
 
     # 把skf输出到csv中，看看是什么内容
     # skf.to_csv('')
 
     ## file to save feat names
-    feat_name_file = "%s/distance.feat_name" % config.feat_folder
+    # feat_name_file = "%s/distance.feat_name" % config.feat_folder
 
 
     ## stats to extract
@@ -258,51 +280,52 @@ if __name__ == "__main__":
     print("==================================================")
     print("Generate distance features...")
 
-    extract_basic_distance_feat(dfTrain)
-    feat_names = [name for name in dfTrain.columns if "jaccard_coef" in name or "dice_dist" in name]
+    # extract_basic_distance_feat(dfTrain)
+    # feat_names = [name for name in dfTrain.columns if "jaccard_coef" in name or "dice_dist" in name]
 
-    print("For cross-validation...")
-    for run in range(config.n_runs):
-        ## use 33% for training and 67 % for validation
-        ## so we switch trainInd and validInd
-        for fold, (validInd, trainInd) in enumerate(skf[run]):
-            print("Run: %d, Fold: %d" % (run+1, fold+1))
-            path = "%s/Run%d/Fold%d" % (config.feat_folder, run+1, fold+1)
-
-            for feat_name in feat_names:
-                X_train = dfTrain[feat_name].values[trainInd]
-                X_valid = dfTrain[feat_name].values[validInd]
-                with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
-                    dill.dump(X_train, f, -1)
-                with open("%s/valid.%s.feat.pkl" % (path, feat_name), "wb") as f:
-                    dill.dump(X_valid, f, -1)
-            ## extract statistical distance features
-            if stats_feat_flag:
-                dfTrain2 = dfTrain.iloc[trainInd].copy()
-                dfValid = dfTrain.iloc[validInd].copy()
-                extract_statistical_distance_feat(path, dfTrain2, dfValid, "valid", feat_names)
-
-    print("Done.")
+    # print("For cross-validation...")
+    # for run in range(config.n_runs):
+    #     ## use 33% for training and 67 % for validation
+    #     ## so we switch trainInd and validInd
+    #     for fold, (validInd, trainInd) in enumerate(skf[run]):
+    #         print("Run: %d, Fold: %d" % (run+1, fold+1))
+    #         path = "%s/Run%d/Fold%d" % (config.feat_folder, run+1, fold+1)
+    #
+    #         for feat_name in feat_names:
+    #             X_train = dfTrain[feat_name].values[trainInd]
+    #             X_valid = dfTrain[feat_name].values[validInd]
+    #             with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
+    #                 dill.dump(X_train, f, -1)
+    #             with open("%s/valid.%s.feat.pkl" % (path, feat_name), "wb") as f:
+    #                 dill.dump(X_valid, f, -1)
+    #         ## extract statistical distance features
+    #         if stats_feat_flag:
+    #             dfTrain2 = dfTrain.iloc[trainInd].copy()
+    #             dfValid = dfTrain.iloc[validInd].copy()
+    #             extract_statistical_distance_feat(path, dfTrain2, dfValid, "valid", feat_names)
+    #
+    # print("Done.")
 
 
     print("For training and testing...")
     path = "%s/All" % config.feat_folder
     ## use full version for X_train
+    dfTest = pd.DataFrame()
     extract_basic_distance_feat(dfTest)
-    for feat_name in feat_names:
-        X_train = dfTrain[feat_name].values
-        X_test = dfTest[feat_name].values
-        with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
-            dill.dump(X_train, f, -1)
-        with open("%s/test.%s.feat.pkl" % (path, feat_name), "wb") as f:
-            dill.dump(X_test, f, -1)
-    ## extract statistical distance features
-    if stats_feat_flag:
-        feat_names = extract_statistical_distance_feat(path, dfTrain, dfTest, "test", feat_names)
-
-    ## save feat names
-    print("Feature names are stored in %s" % feat_name_file)
-    ## dump feat name
-    dump_feat_name(feat_names, feat_name_file)
+    # for feat_name in feat_names:
+    #     X_train = dfTrain[feat_name].values
+    #     X_test = dfTest[feat_name].values
+    #     with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
+    #         dill.dump(X_train, f, -1)
+    #     with open("%s/test.%s.feat.pkl" % (path, feat_name), "wb") as f:
+    #         dill.dump(X_test, f, -1)
+    # ## extract statistical distance features
+    # if stats_feat_flag:
+    #     feat_names = extract_statistical_distance_feat(path, dfTrain, dfTest, "test", feat_names)
+    #
+    # ## save feat names
+    # print("Feature names are stored in %s" % feat_name_file)
+    # ## dump feat name
+    # dump_feat_name(feat_names, feat_name_file)
             
     print("All Done.")
