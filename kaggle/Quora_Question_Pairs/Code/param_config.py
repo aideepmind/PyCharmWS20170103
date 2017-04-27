@@ -35,7 +35,7 @@ class ParamConfig:
         self.n_classes = 2
 
         ## CV params
-        self.n_runs = 3
+        self.n_runs = 1
         self.n_folds = 3
         self.stratified_label = "duplicate"
 
