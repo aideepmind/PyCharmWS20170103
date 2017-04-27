@@ -93,10 +93,6 @@ def extract_feat(df):
     join_str = "_"
     df["question1_trigram"] = list(df.apply(lambda x: ngram.getTrigram(x["question1_unigram"], join_str), axis=1))
     df["question2_trigram"] = list(df.apply(lambda x: ngram.getTrigram(x["question2_unigram"], join_str), axis=1))
-    try:
-        print()
-    except:
-        print()
 
     ################################
     ## word count and digit count ##
@@ -196,7 +192,7 @@ if __name__ == "__main__":
         for fold, (validInd, trainInd) in enumerate(skf[run]):
             print("Run: %d, Fold: %d" % (run+1, fold+1))
             path = "%s/Run%d/Fold%d" % (config.feat_folder, run+1, fold+1)
-              
+
             #########################
             ## get word count feat ##
             #########################

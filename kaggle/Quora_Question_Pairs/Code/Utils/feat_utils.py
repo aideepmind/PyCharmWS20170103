@@ -44,7 +44,7 @@ def dump_feat_name(feat_names, feat_name_file):
 	"""
 		save feat_names to feat_name_file
 	"""
-	with open(feat_name_file, "wb") as f:
+	with open(feat_name_file, "w") as f:
 	    for i,feat_name in enumerate(feat_names):
 	        if feat_name.startswith("count") or feat_name.startswith("pos_of"):
 	            f.write("('%s', SimpleTransform(config.count_feat_transform)),\n" % feat_name)
