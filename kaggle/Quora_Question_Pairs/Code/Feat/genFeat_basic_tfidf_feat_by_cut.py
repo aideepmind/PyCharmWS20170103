@@ -49,6 +49,8 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.metrics.pairwise import cosine_similarity, pairwise_distances
 sys.path.append("../")
 from param_config import config
+import warnings
+warnings.filterwarnings('ignore')
 
 ## 是否执行统计特征，例如：std、mean、max、min、medium等
 stats_feat_flag = False
@@ -130,7 +132,7 @@ def extract_feat(path, dfTrain, dfTest, mode, feat_names, column_names):
             dill.dump(X_train, f, -1)
         with open("%s/%s.%s.feat.pkl" % (path, mode, feat_name), "wb") as f:
             dill.dump(X_test, f, -1)
-        
+
         if stats_feat_flag:
             #####################################
             ## bow/tfidf cosine sim stats feat ##
@@ -180,7 +182,8 @@ def extract_feat(path, dfTrain, dfTest, mode, feat_names, column_names):
                     target_vec = dill.load(f)
                 with open("%s/%s.%s.feat.pkl" % (path, mod, feat_names[j]), "rb") as f:
                     obs_vec = dill.load(f)
-                sim = np.asarray(map(cosine_sim, target_vec, obs_vec))[:,np.newaxis]    # sim: similarity, np.newaxis: add new dim
+                sim = np.asarray(list(map(cosine_sim, target_vec, obs_vec)))    # sim: similarity, np.newaxis: add new dim
+                sim = sim[:,np.newaxis]
                 ## dump feat
                 with open("%s/%s.%s_%s_%s_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type), "wb") as f:   # path/mod_feat_names_feat_names_vec_type_cosine_sim
                     dill.dump(sim, f, -1)
@@ -265,7 +268,8 @@ def extract_feat(path, dfTrain, dfTest, mode, feat_names, column_names):
                         target_vec = dill.load(f)
                     with open("%s/%s.%s_common_svd%d.feat.pkl" % (path, mod, feat_names[j], n_components), "rb") as f:
                         obs_vec = dill.load(f)
-                    sim = np.asarray(map(cosine_sim, target_vec, obs_vec))[:,np.newaxis]
+                    sim = np.asarray(list(map(cosine_sim, target_vec, obs_vec)))
+                    sim = sim[:, np.newaxis]
                     ## dump feat
                     with open("%s/%s.%s_%s_%s_common_svd%d_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type, n_components), "wb") as f:
                         dill.dump(sim, f, -1)
@@ -275,7 +279,7 @@ def extract_feat(path, dfTrain, dfTest, mode, feat_names, column_names):
         #########################
         ## Individual SVD feat ##
         #########################
-        ## generate individual svd feat
+        ## generate individual svd feat 使用当前特征的训练集作为拟合，所以是individual
         for feat_name,column_name in zip(feat_names, column_names):
             print("generate individual %s-svd%d feat for %s" % (vec_type, n_components, column_name))
             with open("%s/train.%s.feat.pkl" % (path, feat_name), "rb") as f:
@@ -395,7 +399,7 @@ if __name__ == "__main__":
     stats_feat_num = len(quantiles_range) + len(stats_func)
 
     ## tfidf config
-    vec_types = [ "tfidf", "bow" ]  # bow: BOOL型权重，是TF-IDF权重的改进，加上语义分析
+    vec_types = [ "tfidf" ]  # bow: BOOL型权重，是TF-IDF权重的改进，加上语义分析
     ngram_range = config.basic_tfidf_ngram_range
     vocabulary_type = config.basic_tfidf_vocabulary_type
     svd_n_components = [100, 150]
@@ -438,6 +442,8 @@ if __name__ == "__main__":
 
         print("For cross-validation...")
         for run in range(config.n_runs):
+            if run == 0:
+                continue
             ## use 33% for training and 67 % for validation
             ## so we switch trainInd and validInd
             for fold, (validInd, trainInd) in enumerate(skf[run]):
