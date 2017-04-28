@@ -59,9 +59,9 @@ if debug:
     hyperopt_param['libfm_max_evals'] = 1
     hyperopt_param['rgf_max_evals'] = 1
 else:
-    xgb_min_num_round = 10
-    xgb_max_num_round = 500
-    xgb_num_round_step = 10
+    xgb_min_num_round = 100
+    xgb_max_num_round = 2000
+    xgb_num_round_step = 50
     skl_min_n_estimators = 10
     skl_max_n_estimators = 500
     skl_n_estimators_step = 10
@@ -281,7 +281,7 @@ param_space_reg_skl_etr = {
 ## gradient boosting regressor
 param_space_reg_skl_gbm = {
     'task': 'reg_skl_gbm',
-    'n_estimators': hp.quniform("n_estimators", skl_min_n_estimators, skl_max_n_estimators, skl_n_estimators_step),
+    'n_estimators': hp.quniform("n_estimators", 200, 2000, 200),
     'learning_rate': hp.quniform("learning_rate", 0.01, 0.5, 0.01),
     'max_features': hp.quniform("max_features", 0.05, 1.0, 0.05),
     'max_depth': hp.quniform('max_depth', 1, 15, 1),

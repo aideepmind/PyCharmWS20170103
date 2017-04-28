@@ -840,7 +840,7 @@ def check_model(models, feat_name):
 if __name__ == "__main__":
     # 训练的模型需要传入说明，否则终止训练
     # specified_models = sys.argv[1:]
-    specified_models = ['reg_skl_lasso']
+    specified_models = ['reg_skl_gbm']
     if len(specified_models) == 0:
         print("You have to specify which model to train.\n")
         print("Usage: python ./train_model_library_lsa.py model1 model2 model3 ...\n")  # cmd中启动命令

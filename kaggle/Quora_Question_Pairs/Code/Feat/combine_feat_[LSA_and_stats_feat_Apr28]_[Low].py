@@ -168,6 +168,9 @@ if __name__ == "__main__":
         ############
         ## TF-IDF ##
         ############
+        ('question1_tfidf_common_vocabulary', SimpleTransform()),
+        ('question2_tfidf_common_vocabulary', SimpleTransform()),
+
         ('question1_tfidf_common_vocabulary_question2_tfidf_common_vocabulary_tfidf_cosine_sim', SimpleTransform()),
         ('question1_bow_common_vocabulary_question2_bow_common_vocabulary_bow_cosine_sim', SimpleTransform()),
 
@@ -181,11 +184,11 @@ if __name__ == "__main__":
         ('question1_bow_common_vocabulary_common_svd150', SimpleTransform()),
         ('question2_bow_common_vocabulary_common_svd150', SimpleTransform()),
 
-        ('question1_tfidf_common_vocabulary_question2_tfidf_common_vocabulary_tfidf_common_svd100_cosine_sim', SimpleTransform()),
-        ('question1_tfidf_common_vocabulary_question2_tfidf_common_vocabulary_tfidf_common_svd150_cosine_sim', SimpleTransform()),
+        # ('question1_tfidf_common_vocabulary_question2_tfidf_common_vocabulary_tfidf_common_svd100_cosine_sim', SimpleTransform()),
+        # ('question1_tfidf_common_vocabulary_question2_tfidf_common_vocabulary_tfidf_common_svd150_cosine_sim', SimpleTransform()),
 
-        ('question1_bow_common_vocabulary_question2_bow_common_vocabulary_bow_common_svd100_cosine_sim', SimpleTransform()),
-        ('question1_bow_common_vocabulary_question2_bow_common_vocabulary_bow_common_svd150_cosine_sim', SimpleTransform()),
+        # ('question1_bow_common_vocabulary_question2_bow_common_vocabulary_bow_common_svd100_cosine_sim', SimpleTransform()),
+        # ('question1_bow_common_vocabulary_question2_bow_common_vocabulary_bow_common_svd150_cosine_sim', SimpleTransform()),
 
         ('question1_tfidf_common_vocabulary_individual_svd100', SimpleTransform()),
         ('question2_tfidf_common_vocabulary_individual_svd100', SimpleTransform()),
@@ -197,6 +200,13 @@ if __name__ == "__main__":
         ('question1_bow_common_vocabulary_individual_svd150', SimpleTransform()),
         ('question2_bow_common_vocabulary_individual_svd150', SimpleTransform()),
 
+        #########################
+        ## Cooccurrence TF-IDF ##
+        #########################
+        # ('question1_unigram_question2_unigram', SimpleTransform()),
+        # ('question1_unigram_question2_bigram', SimpleTransform()),
+        # ('question1_bigram_question2_unigram', SimpleTransform()),
+        # ('question1_bigram_question2_bigram', SimpleTransform()),
     ]
 
     # gen_info(feat_path_name="LSA_and_stats_feat_Apr28")

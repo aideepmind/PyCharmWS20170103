@@ -105,7 +105,9 @@ if __name__ == "__main__":
     ## cooccurrence terms column names
     column_names = [
         "question1_unigram_question2_unigram",
-        "question1_unigram_question2_bigram"
+        "question1_unigram_question2_bigram",
+        "question1_bigram_question2_unigram",
+        "question1_bigram_question2_bigram"
     ]
     ## feature names
     feat_names = [ name+"_tfidf" for name in column_names ]
@@ -122,8 +124,8 @@ if __name__ == "__main__":
     ## load data
     with open(config.processed_train_data_path, "rb") as f:
         dfTrain = dill.load(f)
-    with open(config.processed_test_data_path, "rb") as f:
-        dfTest = dill.load(f)
+    # with open(config.processed_test_data_path, "rb") as f:
+    #     dfTest = dill.load(f)
     ## load pre-defined stratified k-fold index
     with open("%s/stratifiedKFold.%s.pkl" % (config.data_folder, config.stratified_label), "rb") as f:
             skf = pickle.load(f, encoding='latin1')
@@ -136,7 +138,7 @@ if __name__ == "__main__":
 
     ## get cooccurrence terms
     extract_feat(dfTrain)
-    extract_feat(dfTest)
+    # extract_feat(dfTest)
 
     ######################
     ## Cross validation ##
@@ -175,32 +177,32 @@ if __name__ == "__main__":
     #################
     ## Re-training ##
     #################
-    print("For training and testing...")
-    path = "%s/All" % config.feat_folder
-    for feat_name,column_name in zip(feat_names, column_names):
-        print("generate %s feat" % feat_name)
-        tfv = getTFV(ngram_range=ngram_range)
-        X_tfidf_train = tfv.fit_transform(dfTrain[column_name])
-        X_tfidf_test = tfv.transform(dfTest[column_name])
-        with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
-            dill.dump(X_tfidf_train, f, -1)
-        with open("%s/test.%s.feat.pkl" % (path, feat_name), "wb") as f:
-            dill.dump(X_tfidf_test, f, -1)
-
-        ## svd
-        svd = TruncatedSVD(n_components=svd_n_components, n_iter=15)
-        X_svd_train = svd.fit_transform(X_tfidf_train)
-        X_svd_test = svd.transform(X_tfidf_test)
-        with open("%s/train.%s_individual_svd%d.feat.pkl" % (path, feat_name, svd_n_components), "wb") as f:
-            dill.dump(X_svd_train, f, -1)
-        with open("%s/test.%s_individual_svd%d.feat.pkl" % (path, feat_name, svd_n_components), "wb") as f:
-            dill.dump(X_svd_test, f, -1)
-
-    print("Done.")
-
-    ## save feat names
-    print("Feature names are stored in %s" % feat_name_file)
-    feat_names += [ "%s_individual_svd%d"%(f, svd_n_components) for f in feat_names ]
-    dump_feat_name(feat_names, feat_name_file)
+    # print("For training and testing...")
+    # path = "%s/All" % config.feat_folder
+    # for feat_name,column_name in zip(feat_names, column_names):
+    #     print("generate %s feat" % feat_name)
+    #     tfv = getTFV(ngram_range=ngram_range)
+    #     X_tfidf_train = tfv.fit_transform(dfTrain[column_name])
+    #     X_tfidf_test = tfv.transform(dfTest[column_name])
+    #     with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
+    #         dill.dump(X_tfidf_train, f, -1)
+    #     with open("%s/test.%s.feat.pkl" % (path, feat_name), "wb") as f:
+    #         dill.dump(X_tfidf_test, f, -1)
+    #
+    #     ## svd
+    #     svd = TruncatedSVD(n_components=svd_n_components, n_iter=15)
+    #     X_svd_train = svd.fit_transform(X_tfidf_train)
+    #     X_svd_test = svd.transform(X_tfidf_test)
+    #     with open("%s/train.%s_individual_svd%d.feat.pkl" % (path, feat_name, svd_n_components), "wb") as f:
+    #         dill.dump(X_svd_train, f, -1)
+    #     with open("%s/test.%s_individual_svd%d.feat.pkl" % (path, feat_name, svd_n_components), "wb") as f:
+    #         dill.dump(X_svd_test, f, -1)
+    #
+    # print("Done.")
+    #
+    # ## save feat names
+    # print("Feature names are stored in %s" % feat_name_file)
+    # feat_names += [ "%s_individual_svd%d"%(f, svd_n_components) for f in feat_names ]
+    # dump_feat_name(feat_names, feat_name_file)
 
     print("All Done.")
