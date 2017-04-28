@@ -82,7 +82,7 @@ def combine_feat(feat_names, feat_path_name):
                 if len(x_train.shape) == 1:
                     x_train.shape = (x_train.shape[0], 1)
 
-                print(x_train.shape)
+                # print(x_train.shape)
 
                 ## load valid feat
                 feat_valid_file = "%s/valid.%s.feat.pkl" % (path, feat_name)
@@ -102,30 +102,30 @@ def combine_feat(feat_names, feat_path_name):
                 x_train = transformer.fit_transform(x_train)
                 x_valid = transformer.transform(x_valid)
 
-            #     ## stack feat
-            #     if i == 0:
-            #         X_train, X_valid = x_train, x_valid
-            #     else:
-            #         try:
-            #             X_train, X_valid = hstack([X_train, x_train]), hstack([X_valid, x_valid])
-            #         except:
-            #             X_train, X_valid = np.hstack([X_train, x_train]), np.hstack([X_valid, x_valid])
-            #
-            #     print("Combine {:>2}/{:>2} feat: {} ({}D)".format(i+1, len(feat_names), feat_name, x_train.shape[1]))
-            # print("Feat dim: {}D".format(X_train.shape[1]))
+                ## stack feat
+                if i == 0:
+                    X_train, X_valid = x_train, x_valid
+                else:
+                    try:
+                        X_train, X_valid = hstack([X_train, x_train]), hstack([X_valid, x_valid])
+                    except:
+                        X_train, X_valid = np.hstack([X_train, x_train]), np.hstack([X_valid, x_valid])
 
-            # ## load label
-            # # train
-            # info_train = pd.read_csv("%s/train.info" % (save_path), encoding='utf-8')
-            # ## change it to zero-based for multi-classification in xgboost
-            # Y_train = info_train["is_duplicate"]
-            # # valid
-            # info_valid = pd.read_csv("%s/valid.info" % (save_path), encoding='utf-8')
-            # Y_valid = info_valid["is_duplicate"]
-            #
-            # ## dump feat
-            # dump_svmlight_file(X_train, Y_train, "%s/train.feat" % (save_path))
-            # dump_svmlight_file(X_valid, Y_valid, "%s/valid.feat" % (save_path))
+                print("Combine {:>2}/{:>2} feat: {} ({}D)".format(i+1, len(feat_names), feat_name, x_train.shape[1]))
+            print("Feat dim: {}D".format(X_train.shape[1]))
+
+            ## load label
+            # train
+            info_train = pd.read_csv("%s/train.info" % (save_path), encoding='utf-8')
+            ## change it to zero-based for multi-classification in xgboost
+            Y_train = info_train["is_duplicate"]
+            # valid
+            info_valid = pd.read_csv("%s/valid.info" % (save_path), encoding='utf-8')
+            Y_valid = info_valid["is_duplicate"]
+
+            ## dump feat
+            dump_svmlight_file(X_train, Y_train, "%s/train.feat" % (save_path))
+            dump_svmlight_file(X_valid, Y_valid, "%s/valid.feat" % (save_path))
     
     ##########################
     ## Training and Testing ##
