@@ -157,22 +157,17 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
                 X_valid = hstack([X_valid, np.zeros((X_valid.shape[0], X_train.shape[1]-X_valid.shape[1]))])
             elif X_valid.shape[1] > X_train.shape[1]:
                 X_train = hstack([X_train, np.zeros((X_train.shape[0], X_valid.shape[1]-X_train.shape[1]))])
-            print('X_train shape before: ', X_train.shape)
-            print('X_valid shape before: ', X_valid.shape)
             X_train = X_train.tocsr()   # tocsr: Convert this matrix to Compressed Sparse Row format
             X_valid = X_valid.tocsr()
             # ## load weight
             # weight_train = np.loadtxt(weight_train_path, dtype=float)
             # weight_valid = np.loadtxt(weight_valid_path, dtype=float)
-            print('X_train shape after: ', X_train.shape)
-            print('X_valid shape after: ', X_valid.shape)
 
             ## load valid info
             info_train = pd.read_csv(info_train_path)
             numTrain = info_train.shape[0]
             info_valid = pd.read_csv(info_valid_path)
             numValid = info_valid.shape[0]
-            print('info_valid shape after: ', info_valid.shape)
             Y_valid = info_valid["is_duplicate"]
             ## load cdf
             cdf_valid = np.loadtxt(cdf_valid_path, dtype=float)
@@ -183,6 +178,8 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
             # evalerror_softkappa_valid = lambda preds,dtrain: evalerror_softkappa_cdf(preds, dtrain, cdf_valid)
             # evalerror_ebc_valid = lambda preds,dtrain: evalerror_ebc_cdf(preds, dtrain, cdf_valid, ebc_hard_threshold)
             # evalerror_cocr_valid = lambda preds,dtrain: evalerror_cocr_cdf(preds, dtrain, cdf_valid)
+
+
 
             ##############
             ## Training ##
@@ -845,7 +842,7 @@ def check_model(models, feat_name):
 if __name__ == "__main__":
     # 训练的模型需要传入说明，否则终止训练
     # specified_models = sys.argv[1:]
-    specified_models = ['reg_skl_lasso']
+    specified_models = ['bclf_xgb_tree']
     if len(specified_models) == 0:
         print("You have to specify which model to train.\n")
         print("Usage: python ./train_model_library_lsa.py model1 model2 model3 ...\n")  # cmd中启动命令
@@ -864,7 +861,7 @@ if __name__ == "__main__":
         #"""
 
         # 把文件header写入日志
-        log_file = "%s/%s_hyperopt.log" % (log_path, feat_name)
+        log_file = "%s/%s_hyperopt_by_cut.log" % (log_path, feat_name)
         log_handler = open( log_file, 'w' )
         writer = csv.writer( log_handler )
         headers = [ 'trial_counter', 'log_loss_mean', 'log_loss_std' ]

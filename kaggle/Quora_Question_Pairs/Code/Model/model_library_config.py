@@ -415,8 +415,8 @@ feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_reg_xgb_linear
 
 ## classification with xgboost tree booster
-feat_folder = "../../Feat/solution/LSA_and_stats_feat_Apr25"
-feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_Apr25]_[Model@bclf_xgb_tree]"
+feat_folder = "../../Feat/solution/LSA_and_stats_feat_Apr28"
+feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_Apr28]_[Model@bclf_xgb_tree]"
 feat_folders.append( feat_folder )
 feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_bclf_xgb_tree
@@ -481,8 +481,8 @@ feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_reg_skl_ridge
 
 ## lasso
-feat_folder = "../../Feat/solution/LSA_and_stats_feat_Apr25"
-feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_Apr25]_[Model@reg_skl_lasso]"
+feat_folder = "../../Feat/solution/LSA_and_stats_feat_Apr28"
+feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_Apr28]_[Model@reg_skl_lasso]"
 feat_folders.append( feat_folder )
 feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_reg_skl_lasso
