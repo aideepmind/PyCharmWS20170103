@@ -39,11 +39,11 @@ from sklearn.pipeline import Pipeline
 from hyperopt import hp
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 ## keras
-from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation
-from keras.layers.normalization import BatchNormalization
-from keras.layers.advanced_activations import PReLU
-from keras.utils import np_utils, generic_utils
+# from keras.models import Sequential
+# from keras.layers.core import Dense, Dropout, Activation
+# from keras.layers.normalization import BatchNormalization
+# from keras.layers.advanced_activations import PReLU
+# from keras.utils import np_utils, generic_utils
 ## cutomized module
 from model_library_config import feat_folders, feat_names, param_spaces, int_feat
 sys.path.append("../")
@@ -119,17 +119,74 @@ def hyperopt_wrapper(param, feat_folder, feat_name):
 
     return {'loss': log_loss_cv_mean, 'attachments': {'std': log_loss_cv_std}, 'status': STATUS_OK}
 
+global loaded
+loaded = None
+global X_train, labels_train, X_valid, labels_valid, numTrain, numValid, cdf_valid, Y_valid
+X_train = labels_train = X_valid = labels_valid = numTrain = numValid = cdf_valid = Y_valid = None
+
+def load_data(run, fold):
+    print('load_data')
+    global loaded
+    loaded = True
+    global X_train, labels_train, X_valid, labels_valid, numTrain, numValid, cdf_valid, Y_valid
+    #### all the path
+    path = "%s/Run%d/Fold%d" % (feat_folder, run, fold)
+    save_path = "%s/Run%d/Fold%d" % (output_path, run, fold)
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    # feat: combine feat file
+    feat_train_path = "%s/train.feat" % path
+    feat_valid_path = "%s/valid.feat" % path
+    # # weight
+    # weight_train_path = "%s/train.feat.weight" % path
+    # weight_valid_path = "%s/valid.feat.weight" % path
+    # info
+    info_train_path = "%s/train.info" % path
+    info_valid_path = "%s/valid.info" % path
+    # cdf
+    cdf_valid_path = "%s/valid.cdf" % path
+    # raw prediction path (rank)
+    raw_pred_valid_path = "%s/valid.raw.pred.%s_[Id@%d].csv" % (save_path, feat_name, trial_counter)  #
+    rank_pred_valid_path = "%s/valid.pred.%s_[Id@%d].csv" % (save_path, feat_name, trial_counter)  #
+
+    ## load feat
+    X_train, labels_train = load_svmlight_file(feat_train_path)  # load_svmlight_file: Load datasets in the svmlight / libsvm format into sparse CSR matrix
+    X_valid, labels_valid = load_svmlight_file(feat_valid_path)
+    # align feat dim
+    if X_valid.shape[1] < X_train.shape[1]:
+        X_valid = hstack([X_valid, np.zeros((X_valid.shape[0], X_train.shape[1] - X_valid.shape[1]))])
+    elif X_valid.shape[1] > X_train.shape[1]:
+        X_train = hstack([X_train, np.zeros((X_train.shape[0], X_valid.shape[1] - X_train.shape[1]))])
+    print('X_train shape before: ', X_train.shape)
+    print('X_valid shape before: ', X_valid.shape)
+    X_train = X_train.tocsr()  # tocsr: Convert this matrix to Compressed Sparse Row format
+    X_valid = X_valid.tocsr()
+    # ## load weight
+    # weight_train = np.loadtxt(weight_train_path, dtype=float)
+    # weight_valid = np.loadtxt(weight_valid_path, dtype=float)
+    print('X_train shape after: ', X_train.shape)
+    print('X_valid shape after: ', X_valid.shape)
+
+    ## load valid info
+    info_train = pd.read_csv(info_train_path)
+    numTrain = info_train.shape[0]
+    info_valid = pd.read_csv(info_valid_path)
+    numValid = info_valid.shape[0]
+    print('info_valid shape after: ', info_valid.shape)
+    Y_valid = info_valid["is_duplicate"]
+    ## load cdf
+    cdf_valid = np.loadtxt(cdf_valid_path, dtype=float)
+    return X_train, labels_train, X_valid, labels_valid, numTrain, numValid, cdf_valid, Y_valid
 
 #### train CV and final model with a specified parameter setting
 def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
-
+    global loaded
+    global X_train, labels_train, X_valid, labels_valid, numTrain, numValid, cdf_valid, Y_valid
     log_loss_cv = np.zeros((config.n_runs, config.n_folds), dtype=float)
     year = datetime.datetime.now().year
     for run in range(1,config.n_runs+1):  # range(start, end)前包括后不包括
         for fold in range(1,config.n_folds+1):
-            rng = np.random.RandomState(year + 1000 * run + 10 * fold)
-
-            #### all the path
+            rng = np.random.RandomState(datetime.datetime.now().year + 1000 * run + 10 * fold)
             path = "%s/Run%d/Fold%d" % (feat_folder, run, fold)
             save_path = "%s/Run%d/Fold%d" % (output_path, run, fold)
             if not os.path.exists(save_path):
@@ -147,30 +204,9 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
             cdf_valid_path = "%s/valid.cdf" % path
             # raw prediction path (rank)
             raw_pred_valid_path = "%s/valid.raw.pred.%s_[Id@%d].csv" % (save_path, feat_name, trial_counter)  #
-            rank_pred_valid_path = "%s/valid.pred.%s_[Id@%d].csv" % (save_path, feat_name, trial_counter)   #
-
-            ## load feat
-            X_train, labels_train = load_svmlight_file(feat_train_path) # load_svmlight_file: Load datasets in the svmlight / libsvm format into sparse CSR matrix
-            X_valid, labels_valid = load_svmlight_file(feat_valid_path)
-            # align feat dim
-            if X_valid.shape[1] < X_train.shape[1]:
-                X_valid = hstack([X_valid, np.zeros((X_valid.shape[0], X_train.shape[1]-X_valid.shape[1]))])
-            elif X_valid.shape[1] > X_train.shape[1]:
-                X_train = hstack([X_train, np.zeros((X_train.shape[0], X_valid.shape[1]-X_train.shape[1]))])
-            X_train = X_train.tocsr()   # tocsr: Convert this matrix to Compressed Sparse Row format
-            X_valid = X_valid.tocsr()
-            # ## load weight
-            # weight_train = np.loadtxt(weight_train_path, dtype=float)
-            # weight_valid = np.loadtxt(weight_valid_path, dtype=float)
-
-            ## load valid info
-            info_train = pd.read_csv(info_train_path)
-            numTrain = info_train.shape[0]
-            info_valid = pd.read_csv(info_valid_path)
-            numValid = info_valid.shape[0]
-            Y_valid = info_valid["is_duplicate"]
-            ## load cdf
-            cdf_valid = np.loadtxt(cdf_valid_path, dtype=float)
+            rank_pred_valid_path = "%s/valid.pred.%s_[Id@%d].csv" % (save_path, feat_name, trial_counter)  #
+            if loaded is None:
+                X_train, labels_train, X_valid, labels_valid, numTrain, numValid, cdf_valid, Y_valid = load_data(run, fold)
 
             # ## make evalerror func 评价函数
             # evalerror_regrank_valid = lambda preds,dtrain: evalerror_regrank_cdf(preds, dtrain, cdf_valid)
@@ -178,8 +214,6 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
             # evalerror_softkappa_valid = lambda preds,dtrain: evalerror_softkappa_cdf(preds, dtrain, cdf_valid)
             # evalerror_ebc_valid = lambda preds,dtrain: evalerror_ebc_cdf(preds, dtrain, cdf_valid, ebc_hard_threshold)
             # evalerror_cocr_valid = lambda preds,dtrain: evalerror_cocr_cdf(preds, dtrain, cdf_valid)
-
-
 
             ##############
             ## Training ##
@@ -200,11 +234,11 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
                 if "booster" in param:
                     dvalid_base = xgb.DMatrix(X_valid, label=labels_valid)  # , weight=weight_valid
                     dtrain_base = xgb.DMatrix(X_train[index_base], label=labels_train[index_base])  # , weight=weight_train[index_base]
-
+                        
                     watchlist = []
                     if verbose_level >= 2:
                         watchlist  = [(dtrain_base, 'train'), (dvalid_base, 'valid')]
-
+                    
                 ## various models
                 if param["task"] in ["regression", "ranking"]:
                     ## regression & pairwise ranking with xgboost
@@ -332,60 +366,60 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
                     os.system(cmd)
                     os.remove(feat_train_path+".tmp")
                     os.remove(feat_valid_path+".tmp")
-
+                    
                     ## extract libfm prediction
                     pred = np.loadtxt(raw_pred_valid_path, dtype=float)
                     ## labels are in [0,1,2,3]
                     pred += 1
 
-                elif param['task'] == "reg_keras_dnn":
-                    ## regression with keras' deep neural networks
-                    model = Sequential()
-                    ## input layer
-                    model.add(Dropout(param["input_dropout"]))
-                    ## hidden layers
-                    first = True
-                    hidden_layers = param['hidden_layers']
-                    while hidden_layers > 0:
-                        if first:
-                            dim = X_train.shape[1]
-                            first = False
-                        else:
-                            dim = param["hidden_units"]
-                        model.add(Dense(dim, param["hidden_units"], init='glorot_uniform'))
-                        if param["batch_norm"]:
-                            model.add(BatchNormalization((param["hidden_units"],)))
-                        if param["hidden_activation"] == "prelu":
-                            model.add(PReLU((param["hidden_units"],)))
-                        else:
-                            model.add(Activation(param['hidden_activation']))
-                        model.add(Dropout(param["hidden_dropout"]))
-                        hidden_layers -= 1
-
-                    ## output layer
-                    model.add(Dense(param["hidden_units"], 1, init='glorot_uniform'))
-                    model.add(Activation('linear'))
-
-                    ## loss
-                    model.compile(loss='mean_squared_error', optimizer="adam")
-
-                    ## to array
-                    X_train = X_train.toarray()
-                    X_valid = X_valid.toarray()
-
-                    ## scale
-                    scaler = StandardScaler()
-                    X_train[index_base] = scaler.fit_transform(X_train[index_base])
-                    X_valid = scaler.transform(X_valid)
-
-                    ## train
-                    model.fit(X_train[index_base], labels_train[index_base],
-                                nb_epoch=param['nb_epoch'], batch_size=param['batch_size'],
-                                validation_split=0, verbose=0)
-
-                    ##prediction
-                    pred = model.predict(X_valid, verbose=0)
-                    pred.shape = (X_valid.shape[0],)
+                # elif param['task'] == "reg_keras_dnn":
+                #     ## regression with keras' deep neural networks
+                #     model = Sequential()
+                #     ## input layer
+                #     model.add(Dropout(param["input_dropout"]))
+                #     ## hidden layers
+                #     first = True
+                #     hidden_layers = param['hidden_layers']
+                #     while hidden_layers > 0:
+                #         if first:
+                #             dim = X_train.shape[1]
+                #             first = False
+                #         else:
+                #             dim = param["hidden_units"]
+                #         model.add(Dense(dim, param["hidden_units"], init='glorot_uniform'))
+                #         if param["batch_norm"]:
+                #             model.add(BatchNormalization((param["hidden_units"],)))
+                #         if param["hidden_activation"] == "prelu":
+                #             model.add(PReLU((param["hidden_units"],)))
+                #         else:
+                #             model.add(Activation(param['hidden_activation']))
+                #         model.add(Dropout(param["hidden_dropout"]))
+                #         hidden_layers -= 1
+                #
+                #     ## output layer
+                #     model.add(Dense(param["hidden_units"], 1, init='glorot_uniform'))
+                #     model.add(Activation('linear'))
+                #
+                #     ## loss
+                #     model.compile(loss='mean_squared_error', optimizer="adam")
+                #
+                #     ## to array
+                #     X_train = X_train.toarray()
+                #     X_valid = X_valid.toarray()
+                #
+                #     ## scale
+                #     scaler = StandardScaler()
+                #     X_train[index_base] = scaler.fit_transform(X_train[index_base])
+                #     X_valid = scaler.transform(X_valid)
+                #
+                #     ## train
+                #     model.fit(X_train[index_base], labels_train[index_base],
+                #                 nb_epoch=param['nb_epoch'], batch_size=param['batch_size'],
+                #                 validation_split=0, verbose=0)
+                #
+                #     ##prediction
+                #     pred = model.predict(X_valid, verbose=0)
+                #     pred.shape = (X_valid.shape[0],)
 
                 elif param['task'] == "reg_rgf":
                     ## regression with regularized greedy forest (rgf)
@@ -437,7 +471,7 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
                     os.system(cmd)
 
 
-                    model_fn = model_fn_prefix + "-01"
+                    model_fn = model_fn_prefix + "-01" 
                     pars = [
                         "test_x_fn=",valid_x_fn,"\n",
                         "model_fn=", model_fn,"\n",
@@ -445,7 +479,7 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
                     ]
 
                     pars = "".join([str(p) for p in pars])
-
+                    
                     rfg_setting_valid = "./rfg_setting_valid"
                     with open(rfg_setting_valid+".inp", "wb") as f:
                         f.write(pars)
@@ -821,12 +855,12 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
     # output = pd.DataFrame({"id": id_test, "prediction": pred_score})
     # output.to_csv(subm_path, index=False)
     # #"""
-
+        
     return log_loss_cv_mean, log_loss_cv_std
 
 
 
-
+    
 ####################
 ## Model Buliding ##
 ####################
@@ -861,7 +895,7 @@ if __name__ == "__main__":
         #"""
 
         # 把文件header写入日志
-        log_file = "%s/%s_hyperopt_by_cut.log" % (log_path, feat_name)
+        log_file = "%s/%s_hyperopt.log" % (log_path, feat_name)
         log_handler = open( log_file, 'w' )
         writer = csv.writer( log_handler )
         headers = [ 'trial_counter', 'log_loss_mean', 'log_loss_std' ]
@@ -870,7 +904,7 @@ if __name__ == "__main__":
         print(headers)
         writer.writerow( headers )
         log_handler.flush()
-
+        
         print("************************************************************")
         print("Search for the best params")
         #global trial_counter
