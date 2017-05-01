@@ -67,9 +67,9 @@ output_path = "../../Output"
 
 ### global params
 ## you can use bagging to stabilize the predictions
-bootstrap_ratio = 1
+bootstrap_ratio = 0.2
 bootstrap_replacement = False
-bagging_size= 1
+bagging_size= 5
 
 ebc_hard_threshold = False
 verbose_level = 1
@@ -159,6 +159,8 @@ def load_data(run, fold):
         X_train = hstack([X_train, np.zeros((X_train.shape[0], X_valid.shape[1] - X_train.shape[1]))])
     print('X_train shape before: ', X_train.shape)
     print('X_valid shape before: ', X_valid.shape)
+    # 因数据太大，训练时间太长，所以选择合适的数据量来训练，大约2万train，4万valid
+
     X_train = X_train.tocsr()  # tocsr: Convert this matrix to Compressed Sparse Row format
     X_valid = X_valid.tocsr()
     # ## load weight
@@ -226,7 +228,7 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
                     index_base = rng.randint(numTrain, size=sampleSize)
                     index_meta = [i for i in range(numTrain) if i not in index_base]
                 else:
-                    randnum = rng.uniform(size=numTrain)    # 产生 0-1 之间的唯一的随机数
+                    randnum = rng.uniform(size=numTrain)    # 产生 0-1 之间的唯一的均匀分布的随机数
                     index_base = [i for i in range(numTrain) if randnum[i] < bootstrap_ratio]
                     index_meta = [i for i in range(numTrain) if randnum[i] >= bootstrap_ratio]
 

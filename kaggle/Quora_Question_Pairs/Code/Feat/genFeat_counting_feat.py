@@ -112,9 +112,30 @@ def extract_feat(df):
         df["count_of_digit_in_%s"%feat_name] = list(df.apply(lambda x: count_digit(x[feat_name+"_unigram"]), axis=1))   # 数字数量
         df["ratio_of_digit_in_%s"%feat_name] = list(map(try_divide, df["count_of_digit_in_%s"%feat_name], df["count_of_%s_unigram"%(feat_name)]))   # 数字占比
 
+        ## letter count 字母数量
+        df["count_of_letter_in_%s" % feat_name] = list( df.apply(lambda x: len(x[feat_name]), axis=1))
+
+    ####################################
+    ## subtract word and letter count ##
+    ####################################
+    print("generate subtract word counting features")
+    #### unigram
+    for obs_name in feat_names:
+        for target_name in feat_names:
+            if target_name != obs_name:
+                ## word count 单词数量差
+                df["count_of_%s_%s_subtract_%s" % (obs_name,  "unigram", target_name)] = list(df.apply(
+                    lambda x: abs(len(x[obs_name + "_unigram"]) - len(x[target_name + "_unigram"])), axis=1))
+                ## digit count 数字数量差
+                df["count_of_%s_%s_subtract_%s" % (obs_name, "digit", target_name)] = list(df.apply(
+                    lambda x: abs(count_digit(x[obs_name+"_unigram"]) - count_digit(x[target_name+"_unigram"])), axis=1))
+                ## word count 字母数量差
+                f["count_of_%s_%s_subtract_%s" % (obs_name, "letter", target_name)] = list(df.apply(
+                    lambda x: abs(len(x[obs_name]) - len(x[target_name])), axis=1))
+
 
     ##############################
-    ## intersect word count ##
+    ## intersect word count ######
     ##############################
     print("generate intersect word counting features")
     #### unigram

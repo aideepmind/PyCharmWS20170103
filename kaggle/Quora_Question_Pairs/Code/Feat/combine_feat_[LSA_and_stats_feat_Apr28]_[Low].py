@@ -168,11 +168,11 @@ if __name__ == "__main__":
         ############
         ## TF-IDF ##
         ############
-        ('question1_tfidf_common_vocabulary', SimpleTransform()),
-        ('question2_tfidf_common_vocabulary', SimpleTransform()),
+        # ('question1_tfidf_common_vocabulary', SimpleTransform()),
+        # ('question2_tfidf_common_vocabulary', SimpleTransform()),
 
         ('question1_tfidf_common_vocabulary_question2_tfidf_common_vocabulary_tfidf_cosine_sim', SimpleTransform()),
-        ('question1_bow_common_vocabulary_question2_bow_common_vocabulary_bow_cosine_sim', SimpleTransform()),
+        # ('question1_bow_common_vocabulary_question2_bow_common_vocabulary_bow_cosine_sim', SimpleTransform()),
 
         ('question1_tfidf_common_vocabulary_common_svd100', SimpleTransform()),
         ('question2_tfidf_common_vocabulary_common_svd100', SimpleTransform()),
@@ -209,5 +209,5 @@ if __name__ == "__main__":
         # ('question1_bigram_question2_bigram', SimpleTransform()),
     ]
 
-    # gen_info(feat_path_name="LSA_and_stats_feat_Apr28")
+    gen_info(feat_path_name="LSA_and_stats_feat_Apr28")
     combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_Apr28")

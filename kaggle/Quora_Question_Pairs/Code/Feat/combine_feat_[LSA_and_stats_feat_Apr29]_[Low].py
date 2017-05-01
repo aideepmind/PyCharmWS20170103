@@ -172,7 +172,7 @@ if __name__ == "__main__":
         # ('question2_tfidf_common_vocabulary', SimpleTransform()),
 
         ('question1_tfidf_common_vocabulary_question2_tfidf_common_vocabulary_tfidf_cosine_sim', SimpleTransform()),
-        ('question1_bow_common_vocabulary_question2_bow_common_vocabulary_bow_cosine_sim', SimpleTransform()),
+        # ('question1_bow_common_vocabulary_question2_bow_common_vocabulary_bow_cosine_sim', SimpleTransform()),
 
         # ('question1_tfidf_common_vocabulary_common_svd100', SimpleTransform()),
         # ('question2_tfidf_common_vocabulary_common_svd100', SimpleTransform()),

@@ -82,7 +82,7 @@ def combine_feat(feat_names, feat_path_name):
                 if len(x_train.shape) == 1:
                     x_train.shape = (x_train.shape[0], 1)
 
-                # print(x_train.shape)
+                print(x_train.shape)
 
                 ## load valid feat
                 feat_valid_file = "%s/valid.%s.feat.pkl" % (path, feat_name)
