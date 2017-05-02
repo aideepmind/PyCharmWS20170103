@@ -151,11 +151,11 @@ if __name__ == "__main__":
         # ('pos_of_question2_trigram_in_question1_max', SimpleTransform(config.count_feat_transform)),
         # ('pos_of_question2_trigram_in_question1_std', SimpleTransform(config.count_feat_transform)),
 
-        ('normalized_pos_of_question2_trigram_in_question1_min', SimpleTransform()),
-        ('normalized_pos_of_question2_trigram_in_question1_mean', SimpleTransform()),
-        ('normalized_pos_of_question2_trigram_in_question1_median', SimpleTransform()),
-        ('normalized_pos_of_question2_trigram_in_question1_max', SimpleTransform()),
-        ('normalized_pos_of_question2_trigram_in_question1_std', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_min', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_mean', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_median', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_max', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_std', SimpleTransform()),
 
         ##################
         ## jaccard coef ##
