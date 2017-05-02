@@ -141,12 +141,11 @@ replacer = CsvWordReplacer('%s/synonyms.csv' % config.data_folder)
 ## such dict is found by exploring the training data
 replace_dict = {
     r"what's": "what is ",
-    r"What's": "what is ",
     r"\'s": " ",
     r"\'ve": " have ",
-    r"can't": "cannot ",
+    r"can't": "can not ",
     r"n't": " not ",
-    r"I'm": "I am",
+    r"i'm": "i am",
     r" m ": " am ",
     r"\'re": " are ",
     r"\'d": " would ",
@@ -159,48 +158,47 @@ replace_dict = {
     r"e-mail": "email",
     r"\s{2,}": " ",
     r"quikly": "quickly",
-    r" usa ": " America ",
-    r" USA ": " America ",
-    r" u s ": " America ",
-    r" uk ": " England ",
-    r" UK ": " England ",
-    r"india": "India",
-    r"switzerland": "Switzerland",
-    r"china": "China",
-    r"chinese": "Chinese",
+    r" usa ": " america ",
+    r" u s ": " america ",
+    r" uk ": " england ",
+    r" us ": "america",
+    # r"india": "India",
+    # r"switzerland": "Switzerland",
+    # r"china": "China",
+    # r"chinese": "Chinese",
     r"imrovement": "improvement",
     r"intially": "initially",
-    r"quora": "Quora",
+    # r"quora": "Quora",
     r" dms ": "direct messages ",
     r"demonitization": "demonetization",
     r"actived": "active",
     r"kms": " kilometers ",
-    r"KMs": " kilometers ",
     r" cs ": " computer science ",
     r" upvotes ": " up votes ",
-    r" iPhone ": " phone ",
+    r" iphone ": " phone ",
     r"\0rs ": " rs ",
     r"calender": "calendar",
-    r"ios": "operating system",
-    r"gps": "GPS",
-    r"gst": "GST",
+    # r"ios": "operating system",
+    # r"gps": "GPS",
+    # r"gst": "GST",
     r"programing": "programming",
     r"bestfriend": "best friend",
-    r"dna": "DNA",
+    # r"dna": "DNA",
     r"III": "3",
-    r"the US": "America",
-    r"Astrology": "astrology",
-    r"Method": "method",
-    r"Find": "find",
-    r"banglore": "Banglore",
-    r" J K ": " JK ",
-    r"[^A-Za-z0-9^,!.\/'+-=]": " "
+    # r"Astrology": "astrology",
+    # r"Method": "method",
+    # r"Find": "find",
+    # r"banglore": "Banglore",
+    r" j k ": " jk ",
+    r"[^A-Za-z0-9^,!.\/'+-=]": " "  # 删除特殊字符
 }
 
 def clean_text(line, drop_html_flag=False):
     names = ["question1", "question2"]
     for name in names:
         l = line[name]
+
+        ## drop html tag
         if drop_html_flag:
             l = drop_html(l)
         l = l.lower()
@@ -213,12 +211,27 @@ def clean_text(line, drop_html_flag=False):
         ## replace synonyms
         l = replacer.replace(l)
         l = " ".join(l)
+
+        ## replace stop words
+        l = " ".join(w for w in l.split() if w not in stopwords)
+
         line[name] = l
     return line
     
+
 
 ###################
 ## Drop html tag ##
 ###################
 def drop_html(html):
     return BeautifulSoup(html).get_text(separator=" ")
+
+
+########################
+## find unusual words ##
+########################
+def unusual_words(text):
+    text_vocab = set(w.lower() for w in text.split() if w.isalpha())
+    english_vocab = set(w.lower() for w in nltk.corpus.words.words())
+    unusual = text_vocab.difference(english_vocab)
+    return sorted(unusual)

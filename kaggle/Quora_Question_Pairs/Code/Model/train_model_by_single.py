@@ -67,9 +67,9 @@ output_path = "../../Output"
 
 ### global params
 ## you can use bagging to stabilize the predictions
-bootstrap_ratio = 1
+bootstrap_ratio = 0.5
 bootstrap_replacement = False
-bagging_size= 1
+bagging_size= 2
 
 ebc_hard_threshold = False
 verbose_level = 1
@@ -135,14 +135,14 @@ def load_data(run, fold):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     # feat: combine feat file
-    feat_train_path = "%s/train.feat" % path
-    feat_valid_path = "%s/valid.feat" % path
+    feat_train_path = "%s/valid.feat" % path
+    feat_valid_path = "%s/train.feat" % path
     # # weight
     # weight_train_path = "%s/train.feat.weight" % path
     # weight_valid_path = "%s/valid.feat.weight" % path
     # info
-    info_train_path = "%s/train.info" % path
-    info_valid_path = "%s/valid.info" % path
+    info_train_path = "%s/valid.info" % path
+    info_valid_path = "%s/train.info" % path
     # cdf
     cdf_valid_path = "%s/valid.cdf" % path
     # raw prediction path (rank)
