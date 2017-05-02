@@ -151,24 +151,24 @@ def extract_feat(df):
     ######################################
     ## intersect word position feat ######
     ######################################
-    print("generate intersect word position features")
-    for gram in grams:
-        for target_name in feat_names:
-            for obs_name in feat_names:
-                if target_name != obs_name:
-                    pos = list(df.apply(lambda x: get_position_list(x[target_name+"_"+gram], obs=x[obs_name+"_"+gram]), axis=1))    # obs单词在target中的位置
-                    ## stats feat on pos
-                    df["pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = list(map(np.min, pos))
-                    df["pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)] = list(map(np.mean, pos))
-                    df["pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)] = list(map(np.median, pos))
-                    df["pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)] = list(map(np.max, pos))
-                    df["pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] = list(map(np.std, pos))
-                    ## stats feat on normalized_pos
-                    df["normalized_pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)], df["count_of_%s_%s" % (obs_name, gram)]))
-                    df["normalized_pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)], df["count_of_%s_%s" % (obs_name, gram)]))
-                    df["normalized_pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)], df["count_of_%s_%s" % (obs_name, gram)]))
-                    df["normalized_pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)], df["count_of_%s_%s" % (obs_name, gram)]))
-                    df["normalized_pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] , df["count_of_%s_%s" % (obs_name, gram)]))
+    # print("generate intersect word position features")
+    # for gram in grams:
+    #     for target_name in feat_names:
+    #         for obs_name in feat_names:
+    #             if target_name != obs_name:
+    #                 pos = list(df.apply(lambda x: get_position_list(x[target_name+"_"+gram], obs=x[obs_name+"_"+gram]), axis=1))    # obs单词在target中的位置
+    #                 ## stats feat on pos
+    #                 df["pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = list(map(np.min, pos))
+    #                 df["pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)] = list(map(np.mean, pos))
+    #                 df["pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)] = list(map(np.median, pos))
+    #                 df["pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)] = list(map(np.max, pos))
+    #                 df["pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] = list(map(np.std, pos))
+    #                 ## stats feat on normalized_pos
+    #                 df["normalized_pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)], df["count_of_%s_%s" % (obs_name, gram)]))
+    #                 df["normalized_pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)], df["count_of_%s_%s" % (obs_name, gram)]))
+    #                 df["normalized_pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)], df["count_of_%s_%s" % (obs_name, gram)]))
+    #                 df["normalized_pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)], df["count_of_%s_%s" % (obs_name, gram)]))
+    #                 df["normalized_pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] = list(map(try_divide, df["pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] , df["count_of_%s_%s" % (obs_name, gram)]))
 
 
 if __name__ == "__main__":
