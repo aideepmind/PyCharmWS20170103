@@ -41,7 +41,10 @@ elif config.stemmer_type == "snowball":
 def stem_tokens(tokens, stemmer):
     stemmed = []
     for token in tokens:
-        stemmed.append(stemmer.stem(token))
+        try:
+            stemmed.append(stemmer.stem(token))
+        except (e) as e:    # python 3.6 可能会报错，3.5.2 没问题
+            print('exception is: ', e)
     return stemmed
 
 if __name__ == '__main__':
