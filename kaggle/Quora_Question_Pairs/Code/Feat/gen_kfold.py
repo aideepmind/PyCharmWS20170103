@@ -30,12 +30,11 @@ if __name__ == "__main__":
         dfTrain = dill.load(f)
 
     skf = [0]*config.n_runs
+    year = datetime.datetime.now().year
     for stratified_label,key in zip(["duplicate"], ["is_duplicate"]):
-        year = datetime.datetime.now().year
         for run in range(config.n_runs):
             random_seed = year + 1000 * (run+1)
-            skf[run] = StratifiedKFold(dfTrain[key], n_folds=config.n_folds,
-                                        shuffle=True, random_state=random_seed)
+            skf[run] = StratifiedKFold(dfTrain[key], n_folds=config.n_folds, shuffle=True, random_state=random_seed)
             for fold, (validInd, trainInd) in enumerate(skf[run]):
                 print("================================")
                 print("Index for run: %s, fold: %s" % (run+1, fold+1))

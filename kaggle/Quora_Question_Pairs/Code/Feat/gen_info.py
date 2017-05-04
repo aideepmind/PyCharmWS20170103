@@ -49,7 +49,7 @@ def gen_info(feat_path_name):
     Y = dfTrain_original["is_duplicate"].values
 
     ## load pre-defined stratified k-fold index
-    with open("%s/stratifiedKFold.%s.pkl" % (config.data_folder, config.stratified_label), "rb") as f:
+    with open(config.cv_info_path, "rb") as f:
         skf = pickle.load(f, encoding='latin1')
         
     #######################
@@ -59,10 +59,10 @@ def gen_info(feat_path_name):
     print("For cross-validation...")
     for run in range(config.n_runs):
         ## use 33% for training and 67 % for validation
-        ## so we switch trainInd and validInd
-        for fold, (validInd, trainInd) in enumerate(skf[run]):
-            print("Run: %d, Fold: %d" % (run+1, fold+1))
-            path = "%s/%s/Run%d/Fold%d" % (config.feat_folder, feat_path_name, run+1, fold+1)
+        ## so we switch train_index and valid_index
+        for fold, (train_index, valid_index) in skf[run]:
+            print("Run: %d, Fold: %d" % (run + 1, fold + 1))
+            path = "%s/%s/Run%d/Fold%d" % (config.feat_folder, feat_path_name, run + 1, fold + 1)
             if not os.path.exists(path):
                 os.makedirs(path)
             ##########################
@@ -70,30 +70,30 @@ def gen_info(feat_path_name):
             ##########################
             # raise_to = 0.5
             # var = dfTrain["relevance_variance"].values
-            # max_var = np.max(var[trainInd]**raise_to)
+            # max_var = np.max(var[train_index]**raise_to)
             # weight = (1 + np.power(((max_var - var**raise_to) / max_var),1)) / 2.
             # # weight = (max_var - var**raise_to) / max_var, weight 在 1/2 和 1 之间，方差（多位rater进行打分不一致所产生的）越大，权重越小，当方差为0时，权重为1
-            # np.savetxt("%s/train.feat.weight" % path, weight[trainInd], fmt="%.6f")
-            # np.savetxt("%s/valid.feat.weight" % path, weight[validInd], fmt="%.6f")
+            # np.savetxt("%s/train.feat.weight" % path, weight[train_index], fmt="%.6f")
+            # np.savetxt("%s/valid.feat.weight" % path, weight[valid_index], fmt="%.6f")
 
             #############################    
             ## get and dump group info ##
             #############################
-            np.savetxt("%s/train.feat.group" % path, [len(trainInd)], fmt="%d")
-            np.savetxt("%s/valid.feat.group" % path, [len(validInd)], fmt="%d")
+            np.savetxt("%s/train.feat.group" % path, [len(train_index)], fmt="%d")
+            np.savetxt("%s/valid.feat.group" % path, [len(valid_index)], fmt="%d")
             
             ######################
             ## get and dump cdf ##
             ######################
-            hist = np.bincount(Y[trainInd])  # 统计数出现的频率，类似直方图hist
+            hist = np.bincount(Y[train_index])  # 统计数出现的频率，类似直方图hist
             overall_cdf_valid = np.cumsum(hist) / float(sum(hist))  # CDF（cumulative distribution function）累积分布函数
             np.savetxt("%s/valid.cdf" % path, overall_cdf_valid)
                 
             #############################
             ## dump all the other info ##
             #############################
-            dfTrain_original.iloc[trainInd].to_csv("%s/train.info" % path, index=False, header=True, encoding='utf-8')
-            dfTrain_original.iloc[validInd].to_csv("%s/valid.info" % path, index=False, header=True, encoding='utf-8')
+            dfTrain_original.iloc[train_index].to_csv("%s/train.info" % path, index=False, header=True, encoding='utf-8')
+            dfTrain_original.iloc[valid_index].to_csv("%s/valid.info" % path, index=False, header=True, encoding='utf-8')
     print("Done.")
 
     print("For training and testing...")

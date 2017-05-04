@@ -272,7 +272,7 @@ if __name__ == "__main__":
     # with open(config.processed_test_data_path, "rb") as f:
     #     dfTest = dill.load(f)
     # ## load pre-defined stratified k-fold index
-    # with open("%s/stratifiedKFold.%s.pkl" % (config.data_folder, config.stratified_label), "rb") as f:
+    # with open(config.cv_info_path, "rb") as f:
     #     skf = pickle.load(f, encoding='latin1')
 
     ## file to save feat names

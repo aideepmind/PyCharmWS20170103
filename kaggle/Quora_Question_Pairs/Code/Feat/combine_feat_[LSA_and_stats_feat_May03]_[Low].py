@@ -31,56 +31,56 @@ if __name__ == "__main__":
         # ('count_of_question1_unigram', SimpleTransform(config.count_feat_transform)),
         # ('count_of_unique_question1_unigram', SimpleTransform(config.count_feat_transform)),
         # ('ratio_of_unique_question1_unigram', SimpleTransform()),
-
+        #
         # ('count_of_question1_bigram', SimpleTransform(config.count_feat_transform)),
         # ('count_of_unique_question1_bigram', SimpleTransform(config.count_feat_transform)),
         # ('ratio_of_unique_question1_bigram', SimpleTransform()),
-
+        #
         # ('count_of_question1_trigram', SimpleTransform(config.count_feat_transform)),
         # ('count_of_unique_question1_trigram', SimpleTransform(config.count_feat_transform)),
         # ('ratio_of_unique_question1_trigram', SimpleTransform()),
-
+        #
         # ('count_of_digit_in_question1', SimpleTransform(config.count_feat_transform)),
-        ('ratio_of_digit_in_question1', SimpleTransform()),
-
+        # ('ratio_of_digit_in_question1', SimpleTransform()),
+        #
         # ('count_of_question2_unigram', SimpleTransform(config.count_feat_transform)),
         # ('count_of_unique_question2_unigram', SimpleTransform(config.count_feat_transform)),
         # ('ratio_of_unique_question2_unigram', SimpleTransform()),
-
+        #
         # ('count_of_question2_bigram', SimpleTransform(config.count_feat_transform)),
         # ('count_of_unique_question2_bigram', SimpleTransform(config.count_feat_transform)),
         # ('ratio_of_unique_question2_bigram', SimpleTransform()),
-
+        #
         # ('count_of_question2_trigram', SimpleTransform(config.count_feat_transform)),
         # ('count_of_unique_question2_trigram', SimpleTransform(config.count_feat_transform)),
         # ('ratio_of_unique_question2_trigram', SimpleTransform()),
-
+        #
         # ('count_of_digit_in_question2', SimpleTransform(config.count_feat_transform)),
-        ('ratio_of_digit_in_question2', SimpleTransform()),
-
-        ('count_of_question1_unigram_in_question2', SimpleTransform(config.count_feat_transform)),
-        ('ratio_of_question1_unigram_in_question2', SimpleTransform()),
-
+        # ('ratio_of_digit_in_question2', SimpleTransform()),
+        #
+        # ('count_of_question1_unigram_in_question2', SimpleTransform(config.count_feat_transform)),
+        # ('ratio_of_question1_unigram_in_question2', SimpleTransform()),
+        #
         # ('count_of_question2_unigram_in_question1', SimpleTransform(config.count_feat_transform)),
-        ('ratio_of_question2_unigram_in_question1', SimpleTransform()),
-
-        ('count_of_question1_bigram_in_question2', SimpleTransform(config.count_feat_transform)),
-        ('ratio_of_question1_bigram_in_question2', SimpleTransform()),
-
+        # ('ratio_of_question2_unigram_in_question1', SimpleTransform()),
+        #
+        # ('count_of_question1_bigram_in_question2', SimpleTransform(config.count_feat_transform)),
+        # ('ratio_of_question1_bigram_in_question2', SimpleTransform()),
+        #
         # ('count_of_question2_bigram_in_question1', SimpleTransform(config.count_feat_transform)),
-        ('ratio_of_question2_bigram_in_question1', SimpleTransform()),
-
-        ('count_of_question1_trigram_in_question2', SimpleTransform(config.count_feat_transform)),
-        ('ratio_of_question1_trigram_in_question2', SimpleTransform()),
-
+        # ('ratio_of_question2_bigram_in_question1', SimpleTransform()),
+        #
+        # ('count_of_question1_trigram_in_question2', SimpleTransform(config.count_feat_transform)),
+        # ('ratio_of_question1_trigram_in_question2', SimpleTransform()),
+        #
         # ('count_of_question2_trigram_in_question1', SimpleTransform(config.count_feat_transform)),
-        ('ratio_of_question2_trigram_in_question1', SimpleTransform()),
-
-        ('count_of_question1_digit_subtract_question2', SimpleTransform()),
-        ('count_of_question1_unigram_subtract_question2', SimpleTransform()),
-
-        ('count_of_question2_digit_subtract_question1', SimpleTransform()),
-        ('count_of_question2_unigram_subtract_question1', SimpleTransform()),
+        # ('ratio_of_question2_trigram_in_question1', SimpleTransform()),
+        #
+        # ('count_of_question1_digit_subtract_question2', SimpleTransform()),
+        # ('count_of_question1_unigram_subtract_question2', SimpleTransform()),
+        #
+        # ('count_of_question2_digit_subtract_question1', SimpleTransform()),
+        # ('count_of_question2_unigram_subtract_question1', SimpleTransform()),
 
         ##############
         ## Position ##
@@ -151,11 +151,11 @@ if __name__ == "__main__":
         # ('pos_of_question2_trigram_in_question1_max', SimpleTransform(config.count_feat_transform)),
         # ('pos_of_question2_trigram_in_question1_std', SimpleTransform(config.count_feat_transform)),
 
-        ('normalized_pos_of_question2_trigram_in_question1_min', SimpleTransform()),
-        ('normalized_pos_of_question2_trigram_in_question1_mean', SimpleTransform()),
-        ('normalized_pos_of_question2_trigram_in_question1_median', SimpleTransform()),
-        ('normalized_pos_of_question2_trigram_in_question1_max', SimpleTransform()),
-        ('normalized_pos_of_question2_trigram_in_question1_std', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_min', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_mean', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_median', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_max', SimpleTransform()),
+        # ('normalized_pos_of_question2_trigram_in_question1_std', SimpleTransform()),
 
         ##################
         ## jaccard coef ##
@@ -170,7 +170,7 @@ if __name__ == "__main__":
         # ('dice_dist_of_unigram_between_question1_question2', SimpleTransform()),
         # ('dice_dist_of_bigram_between_question1_question2', SimpleTransform()),
         # ('dice_dist_of_trigram_between_question1_question2', SimpleTransform()),
-        
+
         ############
         ## TF-IDF ##
         ############
@@ -213,7 +213,13 @@ if __name__ == "__main__":
         # ('question1_unigram_question2_bigram', SimpleTransform()),
         # ('question1_bigram_question2_unigram', SimpleTransform()),
         # ('question1_bigram_question2_bigram', SimpleTransform()),
+
+        ######################
+        ## word match share ##
+        ######################
+        ('ratio_of_question1_question2_unigram_share', SimpleTransform()),
+        ('ratio_of_question1_question2_unigram_share_tfidf', SimpleTransform()),
     ]
 
-    gen_info(feat_path_name="LSA_and_stats_feat_Map02")
-    combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_Map02")
+    gen_info(feat_path_name="LSA_and_stats_feat_May03")
+    combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_May03")

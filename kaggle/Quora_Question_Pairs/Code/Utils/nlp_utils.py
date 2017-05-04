@@ -202,21 +202,21 @@ def clean_text(line, drop_html_flag=False):
         l = line[name]
 
         ## drop html tag
-        if drop_html_flag:
-            l = drop_html(l)
+        # if drop_html_flag:
+        #     l = drop_html(l)
         l = l.lower()
 
-        ## replace other words
-        for k,v in replace_dict.items():
-            l = re.sub(k, v, l)
-        l = l.split(" ")
-
-        ## replace synonyms
-        l = replacer.replace(l)
-        l = " ".join(l)
-
-        ## replace stop words
-        l = " ".join(w for w in l.split() if w not in stopwords)
+        # ## replace other words
+        # for k,v in replace_dict.items():
+        #     l = re.sub(k, v, l)
+        # l = l.split(" ")
+        #
+        # ## replace synonyms
+        # l = replacer.replace(l)
+        # l = " ".join(l)
+        #
+        # ## replace stop words
+        # l = " ".join(w for w in l.split() if w not in stopwords)
 
         line[name] = l
     return line

@@ -153,12 +153,12 @@ param_space_bclf_xgb_tree = {
     'booster': 'gbtree',    # can be gbtree, gblinear or dart
     'objective': 'binary:logistic',
     'eval_metric': 'logloss',
-    'eta': 0.02,
-    # 'gamma': hp.quniform('gamma', 0, 2, 0.1),
-    # 'min_child_weight': hp.quniform('min_child_weight', 0, 10, 1),
-    'max_depth': hp.quniform('max_depth', 2, 10, 1),
-    # 'subsample': hp.quniform('subsample', 0.5, 1, 0.1),
-    # 'colsample_bytree': hp.quniform('colsample_bytree', 0.1, 1, 0.1),
+    'eta': hp.quniform('eta', 0.01, 1, 0.01),
+    'gamma': hp.quniform('gamma', 0, 2, 0.1),
+    'min_child_weight': hp.quniform('min_child_weight', 0, 10, 1),
+    'max_depth': hp.quniform('max_depth', 1, 10, 1),
+    'subsample': hp.quniform('subsample', 0.5, 1, 0.1),
+    'colsample_bytree': hp.quniform('colsample_bytree', 0.5, 1, 0.1),
     'num_round': hp.quniform('num_round', xgb_min_num_round, xgb_max_num_round, xgb_num_round_step),
     'nthread': xgb_nthread,
     'silent': 1,
@@ -415,8 +415,8 @@ feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_reg_xgb_linear
 
 ## classification with xgboost tree booster
-feat_folder = "../../Feat/solution/LSA_and_stats_feat_Map02"
-feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_Map02]_[Model@bclf_xgb_tree]"
+feat_folder = "../../Feat/solution/LSA_and_stats_feat_May03_CV_Time"
+feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_May03_CV_Time]_[Model@bclf_xgb_tree]"
 feat_folders.append( feat_folder )
 feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_bclf_xgb_tree

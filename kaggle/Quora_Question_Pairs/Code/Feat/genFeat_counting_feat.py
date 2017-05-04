@@ -147,6 +147,10 @@ def extract_feat(df):
                     df["count_of_%s_%s_in_%s"%(obs_name, gram, target_name)] = list(df.apply(lambda x: sum([1. for w in x[obs_name+"_"+gram] if w in set(x[target_name+"_"+gram])]), axis=1))   # 两特征单词相交的数量
                     df["ratio_of_%s_%s_in_%s"%(obs_name, gram, target_name)] = list(map(try_divide, df["count_of_%s_%s_in_%s"%(obs_name,gram,target_name)], df["count_of_%s_%s"%(obs_name,gram)]))   # 两特征单词相交的数量占比
 
+        # ## some other feat
+        # df["question2_%s_in_question1_div_question1_%s" % (gram, gram)] = list(map(try_divide, df["count_of_question2_%s_in_question1" % gram], df["count_of_question1_%s" % gram]))
+        # df["question2_%s_in_question1_div_question1_%s_in_question2" % (gram, gram)] = list(map(try_divide, df["count_of_question2_%s_in_question1" % gram], df["count_of_question1_%s_in_question2" % gram]))
+
 
     ######################################
     ## intersect word position feat ######
@@ -182,8 +186,8 @@ if __name__ == "__main__":
     # with open(config.processed_test_data_path, "rb") as f:
     #     dfTest = dill.load(f)
     ## load pre-defined stratified k-fold index
-    with open("%s/stratifiedKFold.%s.pkl" % (config.data_folder, config.stratified_label), "rb") as f:
-            skf = pickle.load(f, encoding='latin1')
+    with open(config.cv_info_path, "rb") as f:
+        skf = pickle.load(f, encoding='latin1')
 
     ## file to save feat names
     feat_name_file = "%s/counting.feat_name" % config.feat_folder

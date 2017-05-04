@@ -45,10 +45,11 @@ from keras.layers.normalization import BatchNormalization
 from keras.layers.advanced_activations import PReLU
 from keras.utils import np_utils, generic_utils
 ## cutomized module
-from model_library_config import feat_folders, feat_names, param_spaces, int_feat
+from model_library_config_small_range import feat_folders, feat_names, param_spaces, int_feat
 sys.path.append("../")
 from param_config import config
 from ml_metrics import quadratic_weighted_kappa, elementwise
+from sklearn.metrics import log_loss
 from utils import *
 
 
@@ -465,6 +466,7 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
                 # pred_score, cutoff = getScore(pred_rank, cdf_valid, valid=True) # 根据cdf来生成分数
                 # kappa_valid = quadratic_weighted_kappa(pred_score, Y_valid) # 计算kappa分数
                 log_loss_valid = elementwise.log_loss(Y_valid, pred_raw)
+                log_loss_valid = log_loss(Y_valid, pred_raw)
                 print('Y_valid mean:', np.mean(Y_valid))
                 print('pred_raw mean:', np.mean(pred_raw))
                 if (n+1) != bagging_size:
