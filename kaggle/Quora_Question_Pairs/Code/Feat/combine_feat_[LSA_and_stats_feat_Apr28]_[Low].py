@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
         ('question1_tfidf_common_vocabulary_common_svd100', SimpleTransform()),
         ('question2_tfidf_common_vocabulary_common_svd100', SimpleTransform()),
-        # ('question1_tfidf_common_vocabulary_common_svd150', SimpleTransform()),
+        # ('question1_tfidf_common_vocabulary_common_svd150', SimpleTransform()),+
         # ('question2_tfidf_common_vocabulary_common_svd150', SimpleTransform()),
 
         # ('question1_bow_common_vocabulary_common_svd100', SimpleTransform()),
