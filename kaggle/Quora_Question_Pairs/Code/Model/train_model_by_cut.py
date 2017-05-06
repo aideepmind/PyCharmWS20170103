@@ -139,8 +139,8 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
             feat_train_path = "%s/train.feat" % path
             feat_valid_path = "%s/valid.feat" % path
             # # weight
-            # weight_train_path = "%s/train.feat.weight" % path
-            # weight_valid_path = "%s/valid.feat.weight" % path
+            weight_train_path = "%s/train.feat.weight" % path
+            weight_valid_path = "%s/valid.feat.weight" % path
             # info
             info_train_path = "%s/train.info" % path
             info_valid_path = "%s/valid.info" % path
@@ -161,8 +161,8 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
             X_train = X_train.tocsr()   # tocsr: Convert this matrix to Compressed Sparse Row format
             X_valid = X_valid.tocsr()
             # ## load weight
-            # weight_train = np.loadtxt(weight_train_path, dtype=float)
-            # weight_valid = np.loadtxt(weight_valid_path, dtype=float)
+            weight_train = np.loadtxt(weight_train_path, dtype=float)
+            weight_valid = np.loadtxt(weight_valid_path, dtype=float)
 
             ## load valid info
             info_train = pd.read_csv(info_train_path)

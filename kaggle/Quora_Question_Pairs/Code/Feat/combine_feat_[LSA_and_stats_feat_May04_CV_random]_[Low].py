@@ -222,4 +222,4 @@ if __name__ == "__main__":
     ]
 
     gen_info(feat_path_name="LSA_and_stats_feat_May03_CV_random")
-    combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_May03_CV_random")
+    # combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_May03_CV_random")

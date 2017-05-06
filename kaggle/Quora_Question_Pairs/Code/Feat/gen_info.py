@@ -76,6 +76,10 @@ def gen_info(feat_path_name):
             # np.savetxt("%s/train.feat.weight" % path, weight[train_index], fmt="%.6f")
             # np.savetxt("%s/valid.feat.weight" % path, weight[valid_index], fmt="%.6f")
 
+            weight = np.abs(Y - 1 + Y.mean())
+            np.savetxt("%s/train.feat.weight" % path, weight[train_index], fmt="%.6f")
+            np.savetxt("%s/valid.feat.weight" % path, weight[valid_index], fmt="%.6f")
+
             #############################    
             ## get and dump group info ##
             #############################
@@ -105,7 +109,7 @@ def gen_info(feat_path_name):
     # max_var = np.max(var**raise_to)
     # weight = (1 + np.power(((max_var - var**raise_to) / max_var),1)) / 2.
     # np.savetxt("%s/train.feat.weight" % path, weight, fmt="%.6f")
-    
+
     ## group
     np.savetxt("%s/%s/All/train.feat.group" % (config.feat_folder, feat_path_name), [dfTrain.shape[0]], fmt="%d")
     np.savetxt("%s/%s/All/test.feat.group" % (config.feat_folder, feat_path_name), [dfTest.shape[0]], fmt="%d")
@@ -115,8 +119,8 @@ def gen_info(feat_path_name):
     # overall_cdf_full = np.cumsum(hist_full) / float(sum(hist_full))
     overall_cdf_full = [0.835, 1.0]
     np.savetxt("%s/%s/All/test.cdf" % (config.feat_folder, feat_path_name), overall_cdf_full)
-    ## info        
+    ## info
     dfTrain_original.to_csv("%s/%s/All/train.info" % (config.feat_folder, feat_path_name), index=False, header=True)
     dfTest_original.to_csv("%s/%s/All/test.info" % (config.feat_folder, feat_path_name), index=False, header=True)
-    
+
     print("All Done.")
