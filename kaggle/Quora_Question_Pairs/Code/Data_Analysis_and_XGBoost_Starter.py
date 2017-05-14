@@ -100,13 +100,119 @@ from nltk.corpus import stopwords
 
 stops = set(stopwords.words("english"))
 
+replace_dict = {
+    r"what's": "what is ",
+    r"\'s": " ",
+    r"\'ve": " have ",
+    r"can't": "can not ",
+    r"n't": " not ",
+    r"i'm": "i am",
+    r" m ": " am ",
+    r"\'re": " are ",
+    r"\'d": " would ",
+    r"\'ll": " will ",
+    r"60k": " 60000 ",
+    r" e g ": " eg ",
+    r" b g ": " bg ",
+    r"\0s": "0",
+    r" 9 11 ": "911",
+    r"e-mail": "email",
+    r"\s{2,}": " ",
+    r"quikly": "quickly",
+    r" usa ": " america ",
+    r" u s ": " america ",
+    r" uk ": " england ",
+    r" us ": "america",
+    # r"india": "India",
+    # r"switzerland": "Switzerland",
+    # r"china": "China",
+    # r"chinese": "Chinese",
+    r"imrovement": "improvement",
+    r"intially": "initially",
+    # r"quora": "Quora",
+    r" dms ": "direct messages ",
+    r"demonitization": "demonetization",
+    r"actived": "active",
+    r"kms": " kilometers ",
+    r" cs ": " computer science ",
+    r" upvotes ": " up votes ",
+    r" iphone ": " phone ",
+    r"\0rs ": " rs ",
+    r"calender": "calendar",
+    # r"ios": "operating system",
+    # r"gps": "GPS",
+    # r"gst": "GST",
+    r"programing": "programming",
+    r"bestfriend": "best friend",
+    # r"dna": "DNA",
+    r"III": "3",
+    # r"Astrology": "astrology",
+    # r"Method": "method",
+    # r"Find": "find",
+    # r"banglore": "Banglore",
+    r" j k ": " jk ",
+    # r"[^A-Za-z0-9^,!.\/'+-=]": " "  # 删除特殊字符
+}
+import re
+def clean_text(line):
+    names = ["question1", "question2"]
+    for name in names:
+        l = line[name]
+        l = str(l).lower()
+
+        ## replace other words
+        for k,v in replace_dict.items():
+            l = re.sub(k, v, l)
+
+        line[name] = l
+    return line
+
+import nltk
+from nltk.tokenize import TreebankWordTokenizer, WordPunctTokenizer, WhitespaceTokenizer
+stemmer_type = "snowball"
+if stemmer_type == "porter":
+    english_stemmer = nltk.stem.PorterStemmer()
+elif stemmer_type == "snowball":
+    english_stemmer = nltk.stem.SnowballStemmer('english')
+def stem_tokens(tokens, stemmer):
+    stemmed = []
+    for token in tokens:
+        try:
+            stemmed.append(stemmer.stem(token))
+        except (e) as e:    # python 3.6 可能会报错，3.5.2 没问题
+            print('exception is: ', e)
+    return stemmed
+
+token_pattern = r"(?u)\b\w\w+\b"
+# token_pattern = r'\w{1,}'
+# token_pattern = r"\w+"
+# token_pattern = r"[\w']+"
+def preprocess_data(line, token_pattern=token_pattern, encode_digit=False):
+    line = str(line).lower()
+    # token_pattern = re.compile(token_pattern, flags = re.UNICODE | re.LOCALE)
+    ## tokenize
+    # tokens = [x.lower() for x in token_pattern.findall(line)]
+    # tokens = line.split()
+    tokens = WhitespaceTokenizer().tokenize(line)
+    # stem
+    tokens_stemmed = stem_tokens(tokens, english_stemmer)
+    # if True:
+    #     tokens_stemmed = [x for x in tokens_stemmed if x not in stopwords]
+    return tokens_stemmed
+global ind
+ind = 0
 def word_match_share(row):
+    # row = clean_text(row)
+    global ind
     q1words = {}
     q2words = {}
-    for word in str(row['question1']).lower().split():
+    if ind < 5:
+        ind += 1
+        print(preprocess_data(str(row['question1'])))
+    for word in preprocess_data(str(row['question1'])):# str(row['question1']).lower().split()
         if word not in stops:
             q1words[word] = 1
-    for word in str(row['question2']).lower().split():
+    for word in preprocess_data(str(row['question2'])):
         if word not in stops:
             q2words[word] = 1
     if len(q1words) == 0 or len(q2words) == 0:
@@ -147,12 +253,13 @@ weights = {word: get_weight(count) for word, count in counts.items()}
 
 
 def tfidf_word_match_share(row):
+    # row = clean_text(row)
     q1words = {}
     q2words = {}
-    for word in str(row['question1']).lower().split():
+    for word in preprocess_data(str(row['question1'])):
         if word not in stops:
             q1words[word] = 1
-    for word in str(row['question2']).lower().split():
+    for word in preprocess_data(str(row['question2'])):
         if word not in stops:
             q2words[word] = 1
     if len(q1words) == 0 or len(q2words) == 0:

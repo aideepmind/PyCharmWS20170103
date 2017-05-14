@@ -28,7 +28,7 @@ from gensim.models import KeyedVectors
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers import Dense, Input, LSTM, Embedding, Dropout, Activation
-from keras.layers.merge import concatenate
+# from keras.layers.merge import concatenate
 from keras.models import Model
 from keras.layers.normalization import BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -152,7 +152,7 @@ with codecs.open(TEST_DATA_FILE, encoding='utf-8') as f:
         test_ids.append(values[0])
 print('Found %s texts in test.csv' % len(test_texts_1))
 
-tokenizer = Tokenizer(num_words=MAX_NB_WORDS)
+tokenizer = Tokenizer(nb_words=MAX_NB_WORDS)
 tokenizer.fit_on_texts(texts_1 + texts_2 + test_texts_1 + test_texts_2)
 
 sequences_1 = tokenizer.texts_to_sequences(texts_1)
