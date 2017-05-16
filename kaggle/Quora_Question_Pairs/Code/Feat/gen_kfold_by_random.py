@@ -2,7 +2,7 @@
 """
 __file__
 
-    gen_kfold.py
+    gen_kfold_by_stratifiedKFold.py
 
 __description__
 

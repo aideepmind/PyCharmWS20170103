@@ -24,7 +24,7 @@ cmd = "python ./preprocess.py"
 os.system(cmd)
 
 # #### generate kfold
-# cmd = "python ./gen_kfold.py"
+# cmd = "python ./gen_kfold_by_stratifiedKFold.py"
 # os.system(cmd)
 
 #######################

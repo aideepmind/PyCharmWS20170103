@@ -414,8 +414,8 @@ if __name__ == "__main__":
     ## load data
     with open(config.processed_train_data_path, "rb") as f:
         dfTrain = dill.load(f)
-    # with open(config.processed_test_data_path, "rb") as f:
-    #     dfTest = dill.load(f)
+    with open(config.processed_test_data_path, "rb") as f:
+        dfTest = dill.load(f)
     ## load pre-defined stratified k-fold index
     with open(config.cv_info_path, "rb") as f:
         skf = pickle.load(f, encoding='latin1')
@@ -425,7 +425,7 @@ if __name__ == "__main__":
         res = '%s %s' % (x['question1'], x['question2'])
         return res
     dfTrain["all_text"] = list(dfTrain.apply(cat_text, axis=1))
-    # dfTest["all_text"] = list(dfTest.apply(cat_text, axis=1))
+    dfTest["all_text"] = list(dfTest.apply(cat_text, axis=1))
 
     for vec_type in vec_types:
         ## save feat names
@@ -440,28 +440,28 @@ if __name__ == "__main__":
         print("==================================================")
         print("Generate basic %s features..." % vec_type)
 
-        print("For cross-validation...")
-        for run in range(config.n_runs):
-            if run == 0:
-                continue
-            ## use 33% for training and 67 % for validation
-            ## so we switch trainInd and validInd
-            for fold, (validInd, trainInd) in enumerate(skf[run]):
-                print("Run: %d, Fold: %d" % (run+1, fold+1))
-                path = "%s/Run%d/Fold%d" % (config.feat_folder, run+1, fold+1)
-                
-                dfTrain2 = dfTrain.iloc[trainInd].copy()
-                dfValid = dfTrain.iloc[validInd].copy()
-                ## extract feat
-                extract_feat(path, dfTrain2, dfValid, "valid", feat_names, column_names)
-
-        print("Done.")
-
-        # print("For training and testing...")
-        # path = "%s/All" % config.feat_folder
-        # ## extract feat
-        # feat_names = extract_feat(path, dfTrain, dfTest, "test", feat_names, column_names)
-        # ## dump feat name
-        # dump_feat_name(feat_names, feat_name_file)
+        # print("For cross-validation...")
+        # for run in range(config.n_runs):
+        #     if run == 0:
+        #         continue
+        #     ## use 33% for training and 67 % for validation
+        #     ## so we switch trainInd and validInd
+        #     for fold, (validInd, trainInd) in enumerate(skf[run]):
+        #         print("Run: %d, Fold: %d" % (run+1, fold+1))
+        #         path = "%s/Run%d/Fold%d" % (config.feat_folder, run+1, fold+1)
         #
-        # print("All Done.")
+        #         dfTrain2 = dfTrain.iloc[trainInd].copy()
+        #         dfValid = dfTrain.iloc[validInd].copy()
+        #         ## extract feat
+        #         extract_feat(path, dfTrain2, dfValid, "valid", feat_names, column_names)
+        #
+        # print("Done.")
+
+        print("For training and testing...")
+        path = "%s/All" % config.feat_folder
+        ## extract feat
+        feat_names = extract_feat(path, dfTrain, dfTest, "test", feat_names, column_names)
+        ## dump feat name
+        dump_feat_name(feat_names, feat_name_file)
+
+        print("All Done.")

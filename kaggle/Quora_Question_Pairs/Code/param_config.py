@@ -45,14 +45,13 @@ class ParamConfig:
         self.original_train_data_path = "%s/train.csv" % self.data_folder
         self.original_test_data_path = "%s/test.csv" % self.data_folder
         self.processed_train_data_path = "%s/train.processed.csv.pkl" % self.feat_folder
-        self.processed_mild_train_data_path = "%s/train.processed_mild.csv.pkl" % self.feat_folder
         self.processed_test_data_path = "%s/test.processed.csv.pkl" % self.feat_folder
         # self.pos_tagged_train_data_path = "%s/train.pos_tagged.csv.pkl" % self.feat_folder
         # self.pos_tagged_test_data_path = "%s/test.pos_tagged.csv.pkl" % self.feat_folder
         # cv path
-        # self.cv_info_path = "%s/stratifiedKFold.%s.pkl" % (self.data_folder, self.stratified_label)
+        self.cv_info_path = "%s/stratifiedKFold.%s.pkl" % (self.data_folder, self.stratified_label)
         # self.cv_info_path = "%s/timeSeriesSplit.pkl" % self.data_folder
-        self.cv_info_path = "%s/random.pkl" % self.data_folder
+        # self.cv_info_path = "%s/random.pkl" % self.data_folder
 
 
         ## nlp related
@@ -83,7 +82,7 @@ class ParamConfig:
 
 
 ## initialize a param config					
-config = ParamConfig(feat_folder="../../Feat/solution", # 特征保存路径
+config = ParamConfig(feat_folder="../../Feat/solution", # 特征保存路径 feat_folder="../../Feat/solution"
                      drop_html_flag=True,
                      stemmer_type="porter", # 提取词干方式：porter和snowball
                      cooccurrence_word_exclude_stopword=False)
