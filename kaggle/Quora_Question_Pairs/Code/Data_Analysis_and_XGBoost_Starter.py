@@ -187,9 +187,18 @@ x_train['tfidf_word_match'] = tfidf_train_word_match
 # x_test['tfidf_word_match'] = df_test.apply(tfidf_word_match_share, axis=1, raw=True)
 
 y_train = df_train['is_duplicate'].values
+# pos_new/(pos_new + neg) = 0.165 ->  need reduce (pos - pos_new)
+import numpy as np
+need_reduce = y_train[y_train == 1].shape[0] - np.round(0.165 * y_train[y_train == 0].shape[0] / (1 - 0.165))
+pos_ids = df_train['id'][y_train == 1]
+pos_ids = pos_ids.sample(int(need_reduce))
+flags = df_train['id'].apply(lambda x: False if x in pos_ids else True)
+y_train = df_train['is_duplicate'][flags].values
+x_train = x_train[flags]
 
-pos_train = x_train[y_train == 1]
-neg_train = x_train[y_train == 0]
+
+# pos_train = x_train[y_train == 1]
+# neg_train = x_train[y_train == 0]
 
 # Now we oversample the negative class
 # There is likely a much more elegant way to do this...
