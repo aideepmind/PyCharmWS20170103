@@ -35,7 +35,7 @@ df_train = pd.read_csv('kaggle/Quora_Question_Pairs/Data/train.csv')
 # p = df_train['is_duplicate'].mean() # Our predicted probability
 # print('Predicted score:', log_loss(df_train['is_duplicate'], np.zeros_like(df_train['is_duplicate']) + p))
 #
-# df_test = pd.read_csv('../input/test.csv')
+df_test = pd.read_csv('kaggle/Quora_Question_Pairs/Data/test.csv')
 # sub = pd.DataFrame({'test_id': df_test['test_id'], 'is_duplicate': p})
 # sub.to_csv('naive_submission.csv', index=False)
 # sub.head()
@@ -195,10 +195,10 @@ def preprocess_data(line, token_pattern=token_pattern, encode_digit=False):
     # tokens = line.split()
     tokens = WhitespaceTokenizer().tokenize(line)
     # stem
-    tokens_stemmed = stem_tokens(tokens, english_stemmer)
+    # tokens_stemmed = stem_tokens(tokens, english_stemmer)
     # if True:
     #     tokens_stemmed = [x for x in tokens_stemmed if x not in stopwords]
-    return tokens_stemmed
+    return tokens
 global ind
 ind = 0
 def word_match_share(row):
@@ -290,18 +290,27 @@ x_train = pd.DataFrame()
 x_test = pd.DataFrame()
 x_train['word_match'] = train_word_match
 x_train['tfidf_word_match'] = tfidf_train_word_match
-# x_test['word_match'] = df_test.apply(word_match_share, axis=1, raw=True)
-# x_test['tfidf_word_match'] = df_test.apply(tfidf_word_match_share, axis=1, raw=True)
+x_test['word_match'] = df_test.apply(word_match_share, axis=1, raw=True)
+x_test['tfidf_word_match'] = df_test.apply(tfidf_word_match_share, axis=1, raw=True)
 
 y_train = df_train['is_duplicate'].values
-# pos_new/(pos_new + neg) = 0.165 ->  need reduce (pos - pos_new)
-import numpy as np
-need_reduce = y_train[y_train == 1].shape[0] - np.round(0.165 * y_train[y_train == 0].shape[0] / (1 - 0.165))
-pos_ids = df_train['id'][y_train == 1]
-pos_ids = pos_ids.sample(int(need_reduce))
-flags = df_train['id'].apply(lambda x: False if x in pos_ids else True)
-y_train = df_train['is_duplicate'][flags].values
-x_train = x_train[flags]
+# # pos_new/(pos_new + neg) = 0.165 ->  need reduce (pos - pos_new)
+# import numpy as np
+# need_reduce = y_train[y_train == 1].shape[0] - np.round(0.165 * y_train[y_train == 0].shape[0] / (1 - 0.165))
+# pos_ids = df_train['id'][y_train == 1]
+# pos_ids = pos_ids.sample(int(need_reduce))
+# flags = df_train['id'].apply(lambda x: False if x in pos_ids else True)
+# y_train = df_train['is_duplicate'][flags].values
+# x_train = x_train[flags]
+
+
+# train_comb = train_comb.drop(['id', 'is_duplicate'], axis = 1)
+# test_comb = test_comb.drop(['id'], axis=1)
+x_train = pd.concat([x_train, train_comb], axis=1)
+x_test = pd.concat([x_test, test_comb], axis=1)
+
+
+
 
 
 # pos_train = x_train[y_train == 1]
@@ -323,7 +332,7 @@ x_train = x_train[flags]
 
 # Finally, we split some of the data off for validation
 from sklearn.cross_validation import train_test_split
-weight = np.abs(y_train - 1.2 + y_train.mean())
+# weight = np.abs(y_train - 1.2 + y_train.mean())
 x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train, test_size=0.2, random_state=4242)
 
 import xgboost as xgb
@@ -339,7 +348,13 @@ params['max_depth'] = 4
 
 d_train = xgb.DMatrix(x_train, label=y_train)
 d_valid = xgb.DMatrix(x_valid, label=y_valid)   # , weight=w_valid
+d_test = xgb.DMatrix(x_test)
 
 watchlist = [(d_train, 'train'), (d_valid, 'valid')]
 
 bst = xgb.train(params, d_train, 600, watchlist, early_stopping_rounds=50, verbose_eval=10)
+
+preds = bst.predict(d_test)
+result = pd.DataFrame({"test_id": df_test['test_id'], "is_duplicate": preds})
+result.to_csv("kaggle/Quora_Question_Pairs/temp/xgb_train_result.csv", index=False)
+result.head()
