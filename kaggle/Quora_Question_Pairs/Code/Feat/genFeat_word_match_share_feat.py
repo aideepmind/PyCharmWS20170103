@@ -75,6 +75,24 @@ def get_weight(count, eps=10000, min_count=2):
 ## tfidf word match share
 global weights
 weights = None
+def init_weights(dfTrain):
+    ## unigram
+    print("generate unigram")
+    dfTrain["question2_unigram"] = list(dfTrain.apply(lambda x: preprocess_data2(x["question2"]), axis=1))
+    dfTrain["question1_unigram"] = list(dfTrain.apply(lambda x: preprocess_data2(x["question1"]), axis=1))
+    # eps = 5000
+    words = []
+    feat_names = ["question1", "question2"]
+    for feat_name in feat_names:
+        col = dfTrain["%s_unigram" % feat_name]
+        for row in range(0, len(col)):
+            for word in col[row]:
+                words.append(word)
+    counts = Counter(words)
+    global weights
+    weights = {word: get_weight(count) for word, count in counts.items()}
+
+
 def tfidf_word_match_share(w1, w2):
     if len(w1) == 0 or len(w2) == 0:
         return 0
@@ -84,6 +102,7 @@ def tfidf_word_match_share(w1, w2):
         return 0
     rate = 1.0 * np.sum(shared_weights) / np.sum(total_weights)
     return rate
+
 
 
 ######################
@@ -115,8 +134,8 @@ def preprocess_data2(line):
 def extract_feat(df):
     ## unigram
     print("generate unigram")
-    df["question2_unigram"] = list(df.apply(lambda x: preprocess_data(x["question2"]), axis=1))
-    df["question1_unigram"] = list(df.apply(lambda x: preprocess_data(x["question1"]), axis=1))
+    df["question2_unigram"] = list(df.apply(lambda x: preprocess_data2(x["question2"]), axis=1))
+    df["question1_unigram"] = list(df.apply(lambda x: preprocess_data2(x["question1"]), axis=1))
 
     # print('question1_unigram', df["question1_unigram"].head(10))
     # print('question2_unigram', df["question2_unigram"].head(10))
@@ -136,16 +155,6 @@ def extract_feat(df):
     ############################
     ## tfidf word match share ##
     ############################
-    # eps = 5000
-    words = []
-    for feat_name in feat_names:
-        col = df["%s_unigram" % feat_name]
-        for row in range(0, len(col)):
-            for word in col[row]:
-                words.append(word)
-    counts = Counter(words)
-    global weights
-    weights = {word: get_weight(count) for word, count in counts.items()}
     for i in range(len(feat_names) - 1):
         for j in range(i + 1, len(feat_names)):
             target_name = feat_names[i]
@@ -163,8 +172,8 @@ if __name__ == "__main__":
     ## load data
     with open(config.processed_mild_train_data_path, "rb") as f:
         dfTrain = dill.load(f)
-    # with open(config.processed_test_data_path, "rb") as f:
-    #     dfTest = dill.load(f)
+    with open(config.processed_mild_test_data_path, "rb") as f:
+        dfTest = dill.load(f)
     ## load pre-defined stratified k-fold index
     with open(config.cv_info_path, "rb") as f:
         skf = pickle.load(f, encoding='latin1')
@@ -178,46 +187,43 @@ if __name__ == "__main__":
     print("==================================================")
     print("Generate counting features...")
 
+    # init weight for tfidf
+    init_weights(dfTrain)
+
     extract_feat(dfTrain)
-    feat_names = [
-        name for name in dfTrain.columns \
-        if "count" in name \
-        or "ratio" in name \
-        or "div" in name \
-        or "pos_of" in name
-        ]
+    feat_names = [name for name in dfTrain.columns if "ratio" in name]
 
     print("For cross-validation...")
-    for run in range(config.n_runs):
-        ## use 33% for training and 67 % for validation
-        ## so we switch trainInd and validInd
-        for fold, (trainInd, validInd) in skf[run]:
-            print("Run: %d, Fold: %d" % (run + 1, fold + 1))
-            path = "%s/Run%d/Fold%d" % (config.feat_folder, run + 1, fold + 1)
+    # for run in range(config.n_runs):
+    #     ## use 33% for training and 67 % for validation
+    #     ## so we switch trainInd and validInd
+    #     for fold, (validInd, trainInd) in enumerate(skf[run]):
+    #         print("Run: %d, Fold: %d" % (run + 1, fold + 1))
+    #         path = "%s/Run%d/Fold%d" % (config.feat_folder, run + 1, fold + 1)
+    #
+    #         #########################
+    #         ## get word count feat ##
+    #         #########################
+    #         for feat_name in feat_names:
+    #             X_train = dfTrain[feat_name].values[trainInd]
+    #             X_valid = dfTrain[feat_name].values[validInd]
+    #             with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
+    #                 dill.dump(X_train, f, -1)
+    #             with open("%s/valid.%s.feat.pkl" % (path, feat_name), "wb") as f:
+    #                 dill.dump(X_valid, f, -1)
+    # print("Done.")
 
-            #########################
-            ## get word count feat ##
-            #########################
-            for feat_name in feat_names:
-                X_train = dfTrain[feat_name].values[trainInd]
-                X_valid = dfTrain[feat_name].values[validInd]
-                with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
-                    dill.dump(X_train, f, -1)
-                with open("%s/valid.%s.feat.pkl" % (path, feat_name), "wb") as f:
-                    dill.dump(X_valid, f, -1)
-    print("Done.")
-
-    # print("For training and testing...")
-    # path = "%s/All" % config.feat_folder
-    # ## use full version for X_train
-    # extract_feat(dfTest)
-    # for feat_name in feat_names:
-    #     X_train = dfTrain[feat_name].values
-    #     X_test = dfTest[feat_name].values
-    #     with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
-    #         dill.dump(X_train, f, -1)
-    #     with open("%s/test.%s.feat.pkl" % (path, feat_name), "wb") as f:
-    #         dill.dump(X_test, f, -1)
+    print("For training and testing...")
+    path = "%s/All" % config.feat_folder
+    ## use full version for X_train
+    extract_feat(dfTest)
+    for feat_name in feat_names:
+        X_train = dfTrain[feat_name].values
+        X_test = dfTest[feat_name].values
+        with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
+            dill.dump(X_train, f, -1)
+        with open("%s/test.%s.feat.pkl" % (path, feat_name), "wb") as f:
+            dill.dump(X_test, f, -1)
     #
     # ## save feat names
     # print("Feature names are stored in %s" % feat_name_file)

@@ -60,7 +60,7 @@ def gen_info(feat_path_name):
     for run in range(config.n_runs):
         ## use 33% for training and 67 % for validation
         ## so we switch train_index and valid_index
-        for fold, (train_index, valid_index) in skf[run]:
+        for fold, (valid_index, train_index) in enumerate(skf[run]):
             print("Run: %d, Fold: %d" % (run + 1, fold + 1))
             path = "%s/%s/Run%d/Fold%d" % (config.feat_folder, feat_path_name, run + 1, fold + 1)
             if not os.path.exists(path):
@@ -120,7 +120,7 @@ def gen_info(feat_path_name):
     overall_cdf_full = [0.835, 1.0]
     np.savetxt("%s/%s/All/test.cdf" % (config.feat_folder, feat_path_name), overall_cdf_full)
     ## info
-    dfTrain_original.to_csv("%s/%s/All/train.info" % (config.feat_folder, feat_path_name), index=False, header=True)
-    dfTest_original.to_csv("%s/%s/All/test.info" % (config.feat_folder, feat_path_name), index=False, header=True)
+    dfTrain_original.to_csv("%s/%s/All/train.info" % (config.feat_folder, feat_path_name), index=False, header=True, encoding='utf-8')
+    dfTest_original.to_csv("%s/%s/All/test.info" % (config.feat_folder, feat_path_name), index=False, header=True, encoding='utf-8')
 
     print("All Done.")

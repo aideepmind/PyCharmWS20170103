@@ -33,6 +33,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from sklearn.svm import SVR
+from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 ## hyperopt
 from hyperopt import hp
@@ -118,16 +119,42 @@ def hyperopt_wrapper(param, feat_folder, feat_name):
 
     return {'loss': log_loss_cv_mean, 'attachments': {'std': log_loss_cv_std}, 'status': STATUS_OK}
 
-def restore_data(X_train, labels_train, X_valid, labels_valid, train_ids, valid_ids):
+# generate kfold
+def gen_kfold_by_stratifiedKFold(train_data):
+    X_train, labels_train = train_data[:, 1:train_data.shape[1] - 1], train_data[:, train_data.shape[1] - 1]
+    year = datetime.datetime.now().year
+    n_splits = 3
+    skf = StratifiedKFold(n_splits=n_splits, random_state=year)
+    split_data = np.zeros((n_splits), dtype=object)
+    fold = 0
+    for train_index, test_index in skf.split(X_train, labels_train):
+        X_train, X_valid = X_train[train_index], X_train[test_index]
+        y_train, y_valid = labels_train[train_index], labels_train[test_index]
+        split_data[fold] = X_train, y_train, X_valid, y_valid
+        fold += 1
+    return split_data
+
+# 使 Train Data 和 Test Data 中正反比例一致
+def set_scale_same(train_data):
+    ids_train = pd.Series(train_data[:, 0].toarray().T[0])
+    labels_train = pd.Series(train_data[:, train_data.shape[1] - 1].toarray().T[0])
+    need_reduce = labels_train[labels_train == 1].shape[0] - np.round(0.165 * labels_train[labels_train == 0].shape[0] / (1 - 0.165))
+    ids_pos = ids_train[labels_train == 1]
+    pos_ids = ids_pos.sample(int(need_reduce))
+    flags = ids_train.apply(lambda x: False if x in pos_ids else True) # True or False
+    flags = flags.index[flags] # number
+    train_data = train_data[flags]
+    return gen_kfold_by_stratifiedKFold(train_data)
+
+def restore_data(X_train, labels_train, X_valid, labels_valid, ids_train, ids_valid):
     X_train = vstack([X_train, X_valid])
     labels_train = hstack([labels_train, labels_valid]).T
-    train_ids = hstack([train_ids, valid_ids]).T
+    ids_train = hstack([ids_train, ids_valid]).T
     train_data = hstack([X_train, labels_train])
-    train_data = hstack([train_ids, train_data]).tocsr()
+    train_data = hstack([ids_train, train_data]).tocsr()
     train_data = train_data[np.argsort(train_data[:, 0].toarray().reshape(train_data.shape[0]), axis=0)] # 按第一列排序
-    X_train, labels_train = train_data[:, 1:train_data.shape[1] - 1], train_data[:, train_data.shape[1] - 1]
-    return X_train, labels_train
-
+    # X_train, labels_train = train_data[:, 1:train_data.shape[1] - 1], train_data[:, train_data.shape[1] - 1]
+    return train_data
 
 # 还原训练数据和验证数据，使其归为整体
 def restore_data_by_path(path):
@@ -141,9 +168,9 @@ def restore_data_by_path(path):
     X_valid, labels_valid = load_svmlight_file(feat_valid_path)
     info_train = pd.read_csv(info_train_path)
     info_valid = pd.read_csv(info_valid_path)
-    train_ids = info_train['id'].values
-    valid_ids = info_valid['id'].values
-    return restore_data(X_train, labels_train, X_valid, labels_valid, train_ids, valid_ids)
+    ids_train = info_train['id'].values
+    ids_valid = info_valid['id'].values
+    return restore_data(X_train, labels_train, X_valid, labels_valid, ids_train, ids_valid)
 
 global loaded
 loaded = None

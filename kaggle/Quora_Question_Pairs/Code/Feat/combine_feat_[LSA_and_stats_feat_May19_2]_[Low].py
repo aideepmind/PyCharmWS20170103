@@ -215,5 +215,5 @@ if __name__ == "__main__":
         ('ratio_of_question1_question2_unigram_share_tfidf', SimpleTransform()),
     ]
 
-    gen_info(feat_path_name="LSA_and_stats_feat_May19")
-    combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_May19")
+    gen_info(feat_path_name="LSA_and_stats_feat_May19_2")
+    combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_May19_2")

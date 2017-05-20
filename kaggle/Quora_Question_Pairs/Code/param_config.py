@@ -45,7 +45,9 @@ class ParamConfig:
         self.original_train_data_path = "%s/train.csv" % self.data_folder
         self.original_test_data_path = "%s/test.csv" % self.data_folder
         self.processed_train_data_path = "%s/train.processed.csv.pkl" % self.feat_folder
+        self.processed_mild_train_data_path = "%s/train.processed_mild.csv.pkl" % self.feat_folder
         self.processed_test_data_path = "%s/test.processed.csv.pkl" % self.feat_folder
+        self.processed_mild_test_data_path = "%s/test.processed_mild.csv.pkl" % self.feat_folder
         # self.pos_tagged_train_data_path = "%s/train.pos_tagged.csv.pkl" % self.feat_folder
         # self.pos_tagged_test_data_path = "%s/test.pos_tagged.csv.pkl" % self.feat_folder
         # cv path

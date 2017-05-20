@@ -146,7 +146,12 @@ param_space_bclf_xgb_linear = {
     'seed': xgb_random_seed,
     "max_evals": hyperopt_param["xgb_max_evals"],
 }
-
+# There are in general two ways that you can control overfitting in xgboost
+# The first way is to directly control model complexity
+#   This include max_depth, min_child_weight and gamma
+# The second way is to add randomness to make training robust to noise
+#   This include subsample, colsample_bytree
+# Y ou can also reduce stepsize eta, but needs to remember to increase num_round when you do so.
 ## classification with tree booster
 param_space_bclf_xgb_tree = {
     'task': 'classification',
@@ -154,11 +159,11 @@ param_space_bclf_xgb_tree = {
     'objective': 'binary:logistic',
     'eval_metric': 'logloss',
     'eta': hp.quniform('eta', 0.01, 1, 0.01),
-    'gamma': hp.quniform('gamma', 0, 2, 0.1),
-    'min_child_weight': hp.quniform('min_child_weight', 0, 10, 1),
+    'gamma': hp.quniform('gamma', 0, 2, 0.1),   # 正则化
+    'min_child_weight': hp.quniform('min_child_weight', 0, 10, 1),  # 叶结点权重
     'max_depth': hp.quniform('max_depth', 1, 10, 1),
     'subsample': hp.quniform('subsample', 0.5, 1, 0.1),
-    'colsample_bytree': hp.quniform('colsample_bytree', 0.1, 1, 0.1),
+    'colsample_bytree': hp.quniform('colsample_bytree', 0.1, 1, 0.1),   # 每一列（特征）的子样本比例
     'num_round': hp.quniform('num_round', xgb_min_num_round, xgb_max_num_round, xgb_num_round_step),
     'nthread': xgb_nthread,
     'silent': 1,

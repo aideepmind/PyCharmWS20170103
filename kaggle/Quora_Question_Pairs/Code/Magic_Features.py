@@ -5,7 +5,7 @@ import timeit
 train_orig =  pd.read_csv('kaggle/Quora_Question_Pairs/Data/train.csv', header=0)
 test_orig =  pd.read_csv('kaggle/Quora_Question_Pairs/Data/test.csv', header=0)
 
-tic0=timeit.default_timer()
+tic0 = timeit.default_timer()
 df1 = train_orig[['question1']].copy()
 df2 = train_orig[['question2']].copy()
 df1_test = test_orig[['question1']].copy()

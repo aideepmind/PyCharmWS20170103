@@ -29,7 +29,7 @@ from param_config import config
 print("Load data...")
 
 dfTrain = pd.read_csv(config.original_train_data_path).fillna("")
-# dfTest = pd.read_csv(config.original_test_data_path).fillna("")
+dfTest = pd.read_csv(config.original_test_data_path).fillna("")
 # number of train/test samples
 num_train = dfTrain.shape[0]  # , num_test , dfTest.shape[0]
 
@@ -48,7 +48,7 @@ dfTrain["index"] = np.arange(num_train)
 ## clean text
 clean = lambda line: clean_text(line, drop_html_flag=config.drop_html_flag)
 dfTrain = dfTrain.apply(clean, axis=1)
-# dfTest = dfTest.apply(clean, axis=1)
+dfTest = dfTest.apply(clean, axis=1)
 
 print("After clean text and the text is:")
 print(dfTrain[['question1', 'question2']][:10])
@@ -60,8 +60,8 @@ print("Done.")
 ###############
 print("Save data...")
 
-with open(config.processed_train_data_path, "wb") as f:
+with open(config.processed_mild_train_data_path, "wb") as f:
     dill.dump(dfTrain, f, -1)
-# with open(config.processed_test_data_path, "wb") as f:
-#     dill.dump(dfTest, f, -1)
+with open(config.processed_mild_test_data_path, "wb") as f:
+    dill.dump(dfTest, f, -1)
 print("Done.")

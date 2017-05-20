@@ -213,7 +213,16 @@ if __name__ == "__main__":
         ######################
         ('ratio_of_question1_question2_unigram_share', SimpleTransform()),
         ('ratio_of_question1_question2_unigram_share_tfidf', SimpleTransform()),
+
+        #################################
+        ## sentence hash and frequency ##
+        #################################
+        ('sentence_hash_of_question1', SimpleTransform()),
+        ('sentence_hash_of_question2', SimpleTransform()),
+
+        ('sentence_freq_of_question1', SimpleTransform()),
+        ('sentence_freq_of_question2', SimpleTransform()),
     ]
 
-    gen_info(feat_path_name="LSA_and_stats_feat_May19")
-    combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_May19")
+    # gen_info(feat_path_name="LSA_and_stats_feat_May20")
+    combine_feat(feat_names, feat_path_name="LSA_and_stats_feat_May20")
