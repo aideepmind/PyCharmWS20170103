@@ -66,9 +66,9 @@ output_path = "../../Output"
 
 ### global params
 ## you can use bagging to stabilize the predictions
-bootstrap_ratio = 1
+bootstrap_ratio = 0.7
 bootstrap_replacement = False
-bagging_size = 1
+bagging_size = 3
 
 ebc_hard_threshold = False
 verbose_level = 1
@@ -604,10 +604,11 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
     # evalerror_softkappa_test = lambda preds,dtrain: evalerror_softkappa_cdf(preds, dtrain, cdf_test)
     # evalerror_ebc_test = lambda preds,dtrain: evalerror_ebc_cdf(preds, dtrain, cdf_test, ebc_hard_threshold)
     # evalerror_cocr_test = lambda preds,dtrain: evalerror_cocr_cdf(preds, dtrain, cdf_test)
-    rng = np.random.RandomState(datetime.datetime.now().year + 1000 * 1 + 10 * 1)
     ## bagging
     preds_bagging = np.zeros((numTest, bagging_size), dtype=float)
     for n in range(bagging_size):
+        print("", n, " runs training start")
+        rng = np.random.RandomState(datetime.datetime.now().year + 1000 * n + 10 * 1)
         if bootstrap_replacement:
             sampleSize = int(numTrain*bootstrap_ratio)
             #index_meta = rng.randint(numTrain, size=sampleSize)
@@ -889,7 +890,7 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
     # output.to_csv(subm_path, index=False)
     #"""
 
-    return log_loss_cv_mean, log_loss_cv_std
+    # return log_loss_cv_mean, log_loss_cv_std
 
 
 ####################

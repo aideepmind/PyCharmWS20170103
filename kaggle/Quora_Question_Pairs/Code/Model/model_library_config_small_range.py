@@ -416,8 +416,8 @@ feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_reg_xgb_linear
 
 ## classification with xgboost tree booster
-feat_folder = "../../Feat/solution/LSA_and_stats_feat_May20"
-feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_May20]_[Model@bclf_xgb_tree]"
+feat_folder = "../../Feat/solution/LSA_and_stats_feat_May21"
+feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_May21]_[Model@bclf_xgb_tree]"
 feat_folders.append( feat_folder )
 feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_bclf_xgb_tree
