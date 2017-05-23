@@ -75,34 +75,34 @@ xbg_data_test = pd.read_csv('kaggle/housePrices/temp/xgb_test_result.csv')
 
 second_train_x = pd.DataFrame({
     'lasso': lasso_data_train['SalePrice'],
-    'ridge': ridge_data_train['SalePrice'],
-    'ard': ard_data_train['SalePrice'],
-    'br': br_data_train['SalePrice'],
-    'en': en_data_train['SalePrice'],
-    'hr': hr_data_train['SalePrice'],
-    'll': ll_data_train['SalePrice'],
-    'lr': lr_data_train['SalePrice'],
-    'lars': lars_data_train['SalePrice'],
+    # 'ridge': ridge_data_train['SalePrice'],
+    # 'ard': ard_data_train['SalePrice'],
+    # 'br': br_data_train['SalePrice'],
+    # 'en': en_data_train['SalePrice'],
+    # 'hr': hr_data_train['SalePrice'],
+    # 'll': ll_data_train['SalePrice'],
+    # 'lr': lr_data_train['SalePrice'],
+    # 'lars': lars_data_train['SalePrice'],
     'krr': krr_data_train['SalePrice'],
     'gbm': gbm_data_train['SalePrice'],
     'rf': rf_data_train['SalePrice'],
-    'xbg': xbg_data_train['SalePrice']
+    # 'xbg': xbg_data_train['SalePrice']
 })
 
 second_test_x = pd.DataFrame({
     'lasso': lasso_data_test['SalePrice'],
-    'ridge': ridge_data_test['SalePrice'],
-    'ard': ard_data_test['SalePrice'],
-    'br': br_data_test['SalePrice'],
-    'en': en_data_test['SalePrice'],
-    'hr': hr_data_test['SalePrice'],
-    'll': ll_data_test['SalePrice'],
-    'lr': lr_data_test['SalePrice'],
-    'lars': lars_data_test['SalePrice'],
+    # 'ridge': ridge_data_test['SalePrice'],
+    # 'ard': ard_data_test['SalePrice'],
+    # 'br': br_data_test['SalePrice'],
+    # 'en': en_data_test['SalePrice'],
+    # 'hr': hr_data_test['SalePrice'],
+    # 'll': ll_data_test['SalePrice'],
+    # 'lr': lr_data_test['SalePrice'],
+    # 'lars': lars_data_test['SalePrice'],
     'krr': krr_data_test['SalePrice'],
     'gbm': gbm_data_test['SalePrice'],
     'rf': rf_data_test['SalePrice'],
-    'xbg': xbg_data_test['SalePrice']
+    # 'xbg': xbg_data_test['SalePrice']
 })
 
 # 关系图
@@ -112,7 +112,12 @@ second_test_x = pd.DataFrame({
 
 second_train_x = np.log1p(second_train_x)
 second_test_x = np.log1p(second_test_x)
-train_y = np.log1p(train_data['SalePrice'][train_data[train_data['Id'].apply(lambda id: id in lasso_data_train['Id'].values) == True].index])
+train_y = np.log1p(train_data['SalePrice'][train_data['Id'].apply(lambda id: id in lasso_data_train['Id'].values) == True])
+#
+# train_y2 = train_data[['Id', 'SalePrice']][train_data['Id'].apply(lambda id: id in lasso_data_train['Id'].values) == True]
+# for i in lasso_data_train['Id'].values:
+#     if i not in train_y2['Id'].values:
+#         print(i)
 
 # 使用xgb训练
 # max_depth=3, learning_rate=0.1, n_estimators=100,
@@ -122,7 +127,7 @@ train_y = np.log1p(train_data['SalePrice'][train_data[train_data['Id'].apply(lam
 #                  reg_alpha=0, reg_lambda=1, scale_pos_weight=1,
 #                  base_score=0.5, seed=0, missing=None
 param_grid = {
-    'learning_rate': [0.1]}
+    'learning_rate ': [0.1]}
 xgb = GridSearchCV(
     estimator=XGBRegressor(
         n_estimators=2000,
@@ -131,7 +136,7 @@ xgb = GridSearchCV(
         min_child_weight=1,
         gamma=0,
         subsample=0.6,
-        colsample_bytree=0.6,
+        colsample_bytree=0.8,
         objective='reg:linear',
         # scale_pos_weight=1,
         # seed=27,

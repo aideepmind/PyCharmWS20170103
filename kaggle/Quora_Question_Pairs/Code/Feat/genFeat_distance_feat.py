@@ -99,7 +99,7 @@ def pairwise_dist(A, B, dist="jaccard_coef"):
 ######################
 ## Pre-process data ##
 ######################
-token_pattern = r"(?u)\b\w\w+\b"
+token_pattern = r"(?u)\b\w\w+\b"    # 忽略一位的字符串，例如：a，同时忽略了所以的标点符号，例如：','和'?'等
 #token_pattern = r'\w{1,}'
 #token_pattern = r"\w+"
 #token_pattern = r"[\w']+"

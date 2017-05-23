@@ -96,7 +96,7 @@ tfidf__max_df = 0.75
 tfidf__min_df = 3
 def getTFV(token_pattern = token_pattern,
            norm = tfidf__norm,
-           max_df = tfidf__max_df,
+           max_df = tfidf__max_df,  # df: document frequency
            min_df = tfidf__min_df,
            ngram_range = (1, 1),
            vocabulary = None,
@@ -143,6 +143,7 @@ replacer = CsvWordReplacer('%s/synonyms.csv' % config.data_folder)
 ## other replace dict
 ## such dict is found by exploring the training data
 replace_dict = {
+    r"[^A-Za-z0-9^,!.\/'+-=]": " ",  # 删除特殊字符
     r"what's": "what is ",
     r"\'s": " ",
     r"\'ve": " have ",
@@ -193,7 +194,16 @@ replace_dict = {
     # r"Find": "find",
     # r"banglore": "Banglore",
     r" j k ": " jk ",
-    r"[^A-Za-z0-9^,!.\/'+-=]": " "  # 删除特殊字符
+    # r",": " ",
+    # r"\.": " ",
+    # r"!": " ! ",
+    # r"\/": " ",
+    # r"\^": " ^ ",
+    # r"\+": " + ",
+    # r"\-": " - ",
+    # r"\=": " = ",
+    # r"'": " ",
+    r"\s{2,}": " "
 }
 
 def clean_text(line, drop_html_flag=False):
@@ -206,15 +216,15 @@ def clean_text(line, drop_html_flag=False):
         #     l = drop_html(l)
         l = l.lower()
 
-        # ## replace other words
-        # for k,v in replace_dict.items():
-        #     l = re.sub(k, v, l)
-        # l = l.split(" ")
-        #
-        # ## replace synonyms
-        # l = replacer.replace(l)
-        # l = " ".join(l)
-        #
+        ## replace other words
+        for k,v in replace_dict.items():
+            l = re.sub(k, v, l)
+        l = l.split(" ")
+
+        ## replace synonyms
+        l = replacer.replace(l)
+        l = " ".join(l)
+
         # ## replace stop words
         # l = " ".join(w for w in l.split() if w not in stopwords)
 

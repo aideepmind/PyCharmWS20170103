@@ -513,20 +513,36 @@ cols = len(all_data.columns)
 
 # pd.DataFrame(train_x.columns).to_csv("kaggle/housePrices/temp/columns.csv", index=False)
 
-#  {'alpha': 0.0005}, 0.9236106220776238
+#  {'alpha': 0.0005}, 0.9246852859364326
 param_grid_lasso = {
-    'alpha': [0.0005]
+    'alpha': [0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009]
 }
-lasso = GridSearchCV(estimator=Lasso(alpha=0.0005),  param_grid=param_grid_lasso, cv=5)
+lasso = GridSearchCV(
+    estimator=Lasso(
+        alpha=0.0005,
+        fit_intercept=True,
+        normalize=False,
+        precompute=False,
+        copy_X=True,
+        max_iter=2000,
+        tol=1e-4,
+        warm_start=False,
+        positive=False,
+        random_state=None,
+        selection='random'),
+    param_grid=param_grid_lasso,
+    n_jobs=4,
+    iid=False,
+    cv=2)
 lasso.fit(train_x, train_y)
 lasso.grid_scores_, lasso.best_params_, lasso.best_score_
-preds_lasso = np.expm1(lasso.predict(train_x))
+# preds_lasso = np.expm1(lasso.predict(test_x))
 
 
 # "alpha": [1e0, 1e-1, 1e-2, 1e-3]
-# {'alpha': 8.6}, 0.9186295320921184)
+# {'alpha': 8.6}, 0.921370912674622)
 param_grid_krr = {
-    "alpha": [8.6]}
+    "alpha": [6.6, 6.7, 6.8, 6.9]}
 kr = GridSearchCV(
     estimator=KernelRidge(
         alpha=1,
@@ -535,20 +551,52 @@ kr = GridSearchCV(
         degree=3,
         coef0=1,
         kernel_params=None),
-    cv=5,
+    cv=2,
     param_grid=param_grid_krr)
 kr.fit(train_x, train_y)
 kr.grid_scores_, kr.best_params_, kr.best_score_
-preds_krr = np.expm1(kr.predict(train_x))
+# preds_krr = np.expm1(kr.predict(test_x))
 
-preds = 0.7 * preds_lasso + 0.3 * preds_krr
+# 重新训练整个训练集
+# lasso = Lasso(
+#         alpha=0.0006,
+#         fit_intercept=True,
+#         normalize=False,
+#         precompute=False,
+#         copy_X=True,
+#         max_iter=2000,
+#         tol=1e-4,
+#         warm_start=False,
+#         positive=False,
+#         random_state=None,
+#         selection='random')
+# lasso.fit(train_x, train_y)
+# kr = KernelRidge(
+#         alpha=6.8,
+#         kernel="linear",
+#         gamma=None,
+#         degree=3,
+#         coef0=1,
+#         kernel_params=None)
+# kr.fit(train_x, train_y)
+
+
+from sklearn.linear_model import LinearRegression
+lr = LinearRegression()
+preds_combine = pd.DataFrame({"SalePrice_lasso": lasso.predict(train_x), "SalePrice_krr": kr.predict(train_x)})
+lr.fit(preds_combine, train_y)
+print(lr.coef_[0], lr.coef_[1])
+
+# preds = np.expm1(lr.coef_[0] / (lr.coef_[0] + lr.coef_[1]) * lasso.predict(test_x) + lr.coef_[1] / (lr.coef_[0] + lr.coef_[1]) * kr.predict(test_x))
+preds = np.expm1(lr.coef_[0] * lasso.predict(test_x) + lr.coef_[1] * kr.predict(test_x))
 # np.corrcoef(preds_krr, preds_lasso)
 # plt.scatter(preds_lasso, preds_krr)
-plt.scatter(preds, np.expm1(train_y))
-print(np.sqrt(metrics.mean_squared_error(train_y, preds_krr)))
+# plt.scatter(preds, np.expm1(train_y))
+# print(np.sqrt(metrics.mean_squared_error(train_y, preds_krr)))
+# print('preds_lasso:', np.sqrt(metrics.mean_squared_error(train_y, np.log1p(preds))))
 
-# result_lasso_krr = pd.DataFrame({"Id": test_id, "SalePrice": preds})
-# # sns.distplot(result_lasso_krr['SalePrice'], fit=norm)
-# result_lasso_krr['SalePrice'][result_lasso_krr['Id'] == 2550] = 235594.51145508
-# result_lasso_krr.to_csv("kaggle/housePrices/temp/lasso_krr_test_result.csv", index=False)
+result_lasso_krr = pd.DataFrame({"Id": test_id, "SalePrice": preds})
+# sns.distplot(result_lasso_krr['SalePrice'], fit=norm)
+result_lasso_krr['SalePrice'][result_lasso_krr['Id'] == 2550] = 235594.51145508
+result_lasso_krr.to_csv("kaggle/housePrices/temp/lasso_krr_test_result.csv", index=False)
 

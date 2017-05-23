@@ -515,7 +515,7 @@ cols = len(all_data.columns)
 
 # .9236106220776238
 param_grid_lasso = {
-    'alpha': [0.0005]
+    'alpha': [0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009]
 }
 lasso = GridSearchCV(
     estimator=Lasso(
@@ -539,7 +539,7 @@ lasso.grid_scores_, lasso.best_params_, lasso.best_score_
 preds_lasso = np.expm1(lasso.predict(test_x))
 # coef = pd.Series(lasso.best_estimator_.coef_, index = train_x.columns)
 # coef.sort_values(ascending=False).head(50)
-# print('preds_lasso:', np.sqrt(metrics.mean_squared_error(train_y, lasso.predict(train_x))))
+print('preds_lasso:', np.sqrt(metrics.mean_squared_error(train_y, lasso.predict(train_x))))
 result = pd.DataFrame({"Id": test_id, "SalePrice": preds_lasso})
 # sns.distplot(result['SalePrice'], fit=norm)
 result.to_csv("kaggle/housePrices/temp/lasso_test_result.csv", index=False)
