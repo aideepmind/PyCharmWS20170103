@@ -135,6 +135,8 @@ def gen_kfold_by_stratifiedKFold(train_data):
         split_data[fold] = X_train[train_index], labels_train[train_index], X_train[test_index], labels_train[test_index]
         print('labels_train[train_index]:', np.mean(labels_train[train_index]))
         print('labels_train[test_index]:', np.mean(labels_train[test_index]))
+        print('X_train[train_index].shape:', X_train[train_index].shape)
+        print('X_train[test_index].shape:', X_train[test_index].shape)
         fold += 1
     return split_data
 
@@ -143,18 +145,22 @@ def set_scale_same(train_data):
     print('set_scale_same...')
     ids_train = pd.Series(train_data[:, 0].toarray().T[0])
     labels_train = pd.Series(train_data[:, train_data.shape[1] - 1].toarray().T[0])
-    need_reduce = labels_train[labels_train == 1].shape[0] - np.round(0.165 * labels_train[labels_train == 0].shape[0] / (1 - 0.165))
+    need_reduce = labels_train[labels_train == 1].shape[0] - np.round(0.17426 * labels_train[labels_train == 0].shape[0] / (1 - 0.17426))
     ids_pos = ids_train[labels_train == 1]
     split_data = np.zeros((runs, n_splits), dtype=object)
     year = datetime.datetime.now().year
+    train_data3 = None
     for run in range(0, runs):
         random_seed = year + 1000 * (run + 1)
         pos_ids = ids_pos.sample(int(need_reduce), random_state=random_seed)
         flags = ids_train.apply(lambda x: False if x in pos_ids else True)  # True or False
         flags = flags.index[flags]  # number
         train_data2 = train_data[flags]
+        if run == 0:
+            train_data3 = train_data[flags]
         split_data[run] = gen_kfold_by_stratifiedKFold(train_data2.toarray())
-    return split_data
+    X_train, labels_train = train_data3[:, 1:train_data3.shape[1] - 1].toarray(), train_data3[:, train_data3.shape[1] - 1].toarray()
+    return split_data, X_train, labels_train
 
 def restore_data(X_train, labels_train, X_valid, labels_valid, ids_train, ids_valid):
     print('restore_data...')
@@ -164,8 +170,7 @@ def restore_data(X_train, labels_train, X_valid, labels_valid, ids_train, ids_va
     train_data = hstack([X_train, labels_train])
     train_data = hstack([ids_train, train_data]).tocsr()
     train_data = train_data[np.argsort(train_data[:, 0].toarray().reshape(train_data.shape[0]), axis=0)] # 按第一列排序
-    X_train, labels_train = train_data[:, 1:train_data.shape[1] - 1].toarray(), train_data[:, train_data.shape[1] - 1].toarray()
-    return set_scale_same(train_data), X_train, labels_train
+    return set_scale_same(train_data)
 
 # 还原训练数据和验证数据，使其归为整体
 def restore_data_by_path(path):
@@ -569,7 +574,7 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
     # cdf
     # cdf_test_path = "%s/test.cdf" % path
     # raw prediction path (rank)
-    raw_pred_test_path = "%s/test.raw.pred.%s_[Id@%d].csv" % (save_path, feat_name, trial_counter)
+    raw_pred_test_path = "%s/test.raw.pred.%s_[Id@%d]_[Run_Time@%s].csv" % (save_path, feat_name, trial_counter, time.strftime("%Y%m%d%H%M%S", time.localtime()))
     rank_pred_test_path = "%s/test.pred.%s_[Id@%d].csv" % (save_path, feat_name, trial_counter)
     # submission path (is_duplicate as in [0, 1])
     # subm_path = "%s/test.pred.%s_[Id@%d]_[Mean%.6f]_[Std%.6f].csv" % (subm_path, feat_name, trial_counter, log_loss_cv_mean, log_loss_cv_std)
@@ -578,6 +583,8 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
     ## load feat
     # X_train, labels_train = load_svmlight_file(feat_train_path)
     X_train, labels_train = X_train_all, labels_train_all
+    print('X_train_all.shape:', X_train_all.shape)
+    print('labels_train_all.mean:', np.mean(labels_train_all))
     X_test, labels_test = load_svmlight_file(feat_test_path)
     # if X_test.shape[1] < X_train.shape[1]:
     #     X_test = hstack([X_test, np.zeros((X_test.shape[0], X_train.shape[1]-X_test.shape[1]))])
@@ -872,7 +879,16 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
 
         ## weighted averageing over different models
         pred_test = pred
-        preds_bagging[:,n] = pred_test
+        # if abs(np.mean(pred_test) - 0.17426) < 0.1:
+        preds_bagging[:, n] = pred_test
+        print('pred_test mean:', np.mean(pred_test))
+
+    # 去掉误差太大的
+    # cols = []
+    # for col in range(0, preds_bagging.shape[1]):
+    #     if abs(np.mean(preds_bagging[:, col]) - 0.17426) < 0.1:
+    #         cols.append(col)
+    # if len(cols) > 0:
     pred_raw = np.mean(preds_bagging, axis=1)
     # pred_rank = pred_raw.argsort().argsort()
     #

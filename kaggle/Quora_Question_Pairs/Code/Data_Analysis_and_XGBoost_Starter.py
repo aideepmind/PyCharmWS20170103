@@ -152,7 +152,7 @@ replace_dict = {
     # r"Find": "find",
     # r"banglore": "Banglore",
     r" j k ": " jk ",
-    # r"[^A-Za-z0-9^,!.\/'+-=]": " "  # 删除特殊字符
+    r"[^A-Za-z0-9^,!.\/'+-=]": " "  # 删除特殊字符
 }
 import re
 def clean_text(line):
@@ -170,6 +170,11 @@ def clean_text(line):
 
 import nltk
 from nltk.tokenize import TreebankWordTokenizer, WordPunctTokenizer, WhitespaceTokenizer
+from nltk import word_tokenize
+from nltk.stem import PorterStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
+from nltk import pos_tag
+
 stemmer_type = "snowball"
 if stemmer_type == "porter":
     english_stemmer = nltk.stem.PorterStemmer()
@@ -183,6 +188,48 @@ def stem_tokens(tokens, stemmer):
         except (e) as e:    # python 3.6 可能会报错，3.5.2 没问题
             print('exception is: ', e)
     return stemmed
+# 1.     CC      Coordinating conjunction
+# 2.     CD     Cardinal number
+# 3.     DT     Determiner
+# 4.     EX     Existential there
+# 5.     FW     Foreign word
+# 6.     IN     Preposition or subordinating conjunction
+# 7.     JJ     Adjective
+# 8.     JJR     Adjective, comparative
+# 9.     JJS     Adjective, superlative
+# 10.     LS     List item marker
+# 11.     MD     Modal
+# 12.     NN     Noun, singular or mass
+# 13.     NNS     Noun, plural
+# 14.     NNP     Proper noun, singular
+# 15.     NNPS     Proper noun, plural
+# 16.     PDT     Predeterminer
+# 17.     POS     Possessive ending
+# 18.     PRP     Personal pronoun
+# 19.     PRP$     Possessive pronoun
+# 20.     RB     Adverb
+# 21.     RBR     Adverb, comparative
+# 22.     RBS     Adverb, superlative
+# 23.     RP     Particle
+# 24.     SYM     Symbol
+# 25.     TO     to
+# 26.     UH     Interjection
+# 27.     VB     Verb, base form
+# 28.     VBD     Verb, past tense
+# 29.     VBG     Verb, gerund or present participle
+# 30.     VBN     Verb, past participle
+# 31.     VBP     Verb, non-3rd person singular present
+# 32.     VBZ     Verb, 3rd person singular present
+# 33.     WDT     Wh-determiner
+# 34.     WP     Wh-pronoun
+# 35.     WP$     Possessive wh-pronoun
+# 36.     WRB     Wh-adverb
+wordnet_tags = ['n', 'v']
+lemmatizer = WordNetLemmatizer()
+def lemmatize(token, tag):
+    if tag[0].lower() in wordnet_tags:
+        return lemmatizer.lemmatize(token, tag[0].lower())
+    return token
 
 token_pattern = r"(?u)\b\w\w+\b"
 # token_pattern = r'\w{1,}'
@@ -194,16 +241,19 @@ def preprocess_data(line, token_pattern=token_pattern, encode_digit=False):
     ## tokenize
     # tokens = [x.lower() for x in token_pattern.findall(line)]
     # tokens = line.split()
-    tokens = WhitespaceTokenizer().tokenize(line)
-    # stem
+    # tokens = WhitespaceTokenizer().tokenize(line)
+    # # stem
     # tokens_stemmed = stem_tokens(tokens, english_stemmer)
     # if True:
     #     tokens_stemmed = [x for x in tokens_stemmed if x not in stopwords]
-    return tokens
+
+    tagged_corpus = pos_tag(word_tokenize(line))
+    tokens_lemmatize = [lemmatize(token, tag) for token, tag in tagged_corpus]
+    return tokens_lemmatize
 global ind
 ind = 0
 def word_match_share(row):
-    # row = clean_text(row)
+    row = clean_text(row)
     global ind
     q1words = {}
     q2words = {}
@@ -236,7 +286,7 @@ from collections import Counter
 
 # If a word appears only once, we ignore it completely (likely a typo)
 # Epsilon defines a smoothing constant, which makes the effect of extremely rare words smaller
-def get_weight(count, eps=10000, min_count=2):
+def get_weight(count, eps=10000, min_count=3):
     if count < min_count:
         return 0
     else:
@@ -254,7 +304,7 @@ weights = {word: get_weight(count) for word, count in counts.items()}
 
 
 def tfidf_word_match_share(row):
-    # row = clean_text(row)
+    row = clean_text(row)
     q1words = {}
     q2words = {}
     for word in preprocess_data(str(row['question1'])):
@@ -296,10 +346,10 @@ x_test['tfidf_word_match'] = df_test.apply(tfidf_word_match_share, axis=1, raw=T
 
 
 
-train_comb = train_comb.drop(['id', 'is_duplicate'], axis = 1)
-test_comb = test_comb.drop(['id'], axis=1)
-x_train = pd.concat([x_train, train_comb], axis=1)
-x_test = pd.concat([x_test, test_comb], axis=1)
+# train_comb = train_comb.drop(['id', 'is_duplicate'], axis = 1)
+# test_comb = test_comb.drop(['id'], axis=1)
+# x_train = pd.concat([x_train, train_comb], axis=1)
+# x_test = pd.concat([x_test, test_comb], axis=1)
 
 
 y_train = df_train['is_duplicate'].values
@@ -354,12 +404,69 @@ params['max_depth'] = 4
 d_train = xgb.DMatrix(x_train2, label=y_train2)
 d_valid = xgb.DMatrix(x_valid, label=y_valid)   # , weight=w_valid
 d_test = xgb.DMatrix(x_test)
-
 watchlist = [(d_train, 'train'), (d_valid, 'valid')]
-
 bst = xgb.train(params, d_train, 600, watchlist, early_stopping_rounds=50, verbose_eval=10)
+
 
 preds = bst.predict(d_test)
 result = pd.DataFrame({"test_id": df_test['test_id'], "is_duplicate": preds})
 result.to_csv("kaggle/Quora_Question_Pairs/temp/xgb_train_result.csv", index=False)
 result.head()
+
+
+from sklearn.grid_search import GridSearchCV
+from sklearn.linear_model import Lasso
+from sklearn.metrics import log_loss
+from sklearn.preprocessing import  MinMaxScaler
+# param_grid_lasso = {
+#     'alpha': [0.0005, 0.001, 0.005, 0.006]
+# }
+# lasso = GridSearchCV(
+#     estimator=Lasso(
+#         alpha=0.0005,
+#         fit_intercept=True,
+#         normalize=False,
+#         precompute=False,
+#         copy_X=True,
+#         max_iter=2000,
+#         tol=1e-4,
+#         warm_start=False,
+#         positive=False,
+#         random_state=None,
+#         selection='cyclic'),
+#     param_grid=param_grid_lasso,
+#     # scoring='neg_log_loss',
+#     n_jobs=4,
+#     iid=False,
+#     cv=5)
+# lasso.fit(x_train, y_train)
+# # lasso.predict_proba()
+# y_preds = lasso.predict(x_train)
+# lasso.grid_scores_, lasso.best_params_, lasso.best_score_
+# min_max_scaler = MinMaxScaler()
+# y_preds = min_max_scaler.fit_transform(y_preds)
+# score = log_loss(y_train, y_preds)
+
+from sklearn.linear_model import LogisticRegression
+param_grid = {
+    "C": [0.01, 0.05, 0.1, 0.5, 1.0]}
+logistic = GridSearchCV(
+    estimator=LogisticRegression(
+        penalty='l2', dual=False,
+        tol=1e-4,
+        C=1.0,
+        fit_intercept=True,
+        intercept_scaling=1,
+        class_weight=None,
+        random_state=None,
+        solver='liblinear',
+        max_iter=100,
+        multi_class='ovr',
+        verbose=0,
+        warm_start=False,
+        n_jobs=1
+    ),
+    cv=5,
+    param_grid=param_grid)
+logistic.fit(x_train, y_train)
+logistic.grid_scores_, logistic.best_params_, logistic.best_score_

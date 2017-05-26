@@ -143,7 +143,7 @@ def set_scale_same(train_data):
     print('set_scale_same...')
     ids_train = pd.Series(train_data[:, 0].toarray().T[0])
     labels_train = pd.Series(train_data[:, train_data.shape[1] - 1].toarray().T[0])
-    need_reduce = labels_train[labels_train == 1].shape[0] - np.round(0.165 * labels_train[labels_train == 0].shape[0] / (1 - 0.165))
+    need_reduce = labels_train[labels_train == 1].shape[0] - np.round(0.17426 * labels_train[labels_train == 0].shape[0] / (1 - 0.17426))
     ids_pos = ids_train[labels_train == 1]
     split_data = np.zeros((runs, n_splits), dtype=object)
     year = datetime.datetime.now().year

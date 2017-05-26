@@ -48,6 +48,21 @@ comb['q2_freq'] = comb['q2_hash'].map(lambda x: try_apply_dict(x,q1_vc) + try_ap
 train_comb = comb[comb['is_duplicate'] >= 0][['id','q1_hash','q2_hash','q1_freq','q2_freq','is_duplicate']]
 test_comb = comb[comb['is_duplicate'] < 0][['id','q1_hash','q2_hash','q1_freq','q2_freq']]
 
+# train_comb['id_log'] = np.log1p(train_comb['id'])
+# train_comb['q1_freq_exp'] = np.expm1(train_comb['q1_freq'])
+# train_comb['q2_freq_exp'] = np.expm1(train_comb['q2_freq'])
+# train_comb['q1_freq_log'] = np.log1p(train_comb['q1_freq'])
+# train_comb['q2_freq_log'] = np.log1p(train_comb['q2_freq'])
+# train_comb['q1_hash_log'] = np.log1p(train_comb['q1_hash'])
+# train_comb['q2_hash_log'] = np.log1p(train_comb['q2_hash'])
+# test_comb['id_log'] = np.log1p(test_comb['id'])
+# test_comb['q1_freq_exp'] = np.expm1(test_comb['q1_freq'])
+# test_comb['q2_freq_exp'] = np.expm1(test_comb['q2_freq'])
+# test_comb['q1_freq_log'] = np.log1p(test_comb['q1_freq'])
+# test_comb['q2_freq_log'] = np.log1p(test_comb['q2_freq'])
+# test_comb['q1_hash_log'] = np.log1p(test_comb['q1_hash'])
+# test_comb['q2_hash_log'] = np.log1p(test_comb['q2_hash'])
+
 corr_mat = train_comb.corr()
 corr_mat.head()
 #more frequenct questions are more likely to be duplicates

@@ -48,6 +48,7 @@ from feat_utils import get_sample_indices_by_relevance, dump_feat_name
 from sklearn.manifold import TSNE
 from sklearn.decomposition import TruncatedSVD
 from collections import Counter
+from collections import defaultdict
 sys.path.append("../")
 from param_config import config
 
@@ -62,8 +63,12 @@ def try_apply_dict(x,dict_to_apply):
     except KeyError:
         return 0
 
+def q1_q2_intersect(q_dict, row):
+    return (len(set(q_dict[row['question1']]).intersection(set(q_dict[row['question2']]))))
+
 ## extract all features
 def extract_feat(dfTrain, dfTest):
+    print('copy...')
     df1 = dfTrain[['question1']].copy()
     df2 = dfTrain[['question2']].copy()
     df1_test = dfTest[['question1']].copy()
@@ -88,6 +93,7 @@ def extract_feat(dfTrain, dfTest):
     test_cp.rename(columns={'test_id':'id'},inplace=True)
     comb = pd.concat([train_cp,test_cp])
 
+    print('hash...')
     comb['sentence_hash_of_question1'] = comb['question1'].map(questions_dict)
     comb['sentence_hash_of_question2'] = comb['question2'].map(questions_dict)
 
@@ -95,14 +101,46 @@ def extract_feat(dfTrain, dfTest):
     question2_vc = comb.sentence_hash_of_question2.value_counts().to_dict()
 
     # map to frequency space
+    print('freq...')
     comb['sentence_freq_of_question1'] = comb['sentence_hash_of_question1'].map(lambda x: try_apply_dict(x, question1_vc) + try_apply_dict(x, question2_vc))
     comb['sentence_freq_of_question2'] = comb['sentence_hash_of_question2'].map(lambda x: try_apply_dict(x, question1_vc) + try_apply_dict(x, question2_vc))
 
-    train_comb = comb[comb['is_duplicate'] >= 0][['sentence_hash_of_question1', 'sentence_hash_of_question2', 'sentence_freq_of_question1', 'sentence_freq_of_question2']]
-    test_comb = comb[comb['is_duplicate'] < 0][['sentence_hash_of_question1', 'sentence_hash_of_question2', 'sentence_freq_of_question1', 'sentence_freq_of_question2']]
+    print('sum...')
+    comb['sentence_sum_of_question1_question2'] = comb.apply(lambda x: x['sentence_freq_of_question1'] + x['sentence_freq_of_question2'], axis=1)
+    comb['sentence_mean_of_question1_question2'] = comb.apply(lambda x: x['sentence_sum_of_question1_question2'] / 2.0, axis=1)
+    comb['sentence_div_of_question1_question2'] = comb.apply(lambda x: abs(x['sentence_freq_of_question1'] - x['sentence_freq_of_question2']), axis=1)
+
+
+    train_comb = comb[comb['is_duplicate'] >= 0][['sentence_hash_of_question1', 'sentence_hash_of_question2',
+                                                  'sentence_freq_of_question1', 'sentence_freq_of_question2',
+                                                  'sentence_sum_of_question1_question2', 'sentence_mean_of_question1_question2',
+                                                  'sentence_div_of_question1_question2']]
+    test_comb = comb[comb['is_duplicate'] < 0][['sentence_hash_of_question1', 'sentence_hash_of_question2',
+                                                'sentence_freq_of_question1', 'sentence_freq_of_question2',
+                                                  'sentence_sum_of_question1_question2', 'sentence_mean_of_question1_question2',
+                                                  'sentence_div_of_question1_question2']]
 
     dfTrain = pd.concat([dfTrain, train_comb], axis=1)
     dfTest = pd.concat([dfTest, test_comb], axis=1)
+
+    ques = pd.concat([dfTrain[['question1', 'question2']], \
+                      dfTest[['question1', 'question2']]], axis=0).reset_index(drop='index')
+
+    print('q_dict...')
+    q_dict = defaultdict(set)
+    for i in range(ques.shape[0]):
+        q_dict[ques.question1[i]].add(ques.question2[i])
+        q_dict[ques.question2[i]].add(ques.question1[i])
+
+    print('train intersect...')
+    dfTrain['sentence_intersect_of_question1_question2'] = dfTrain.apply(lambda x: q1_q2_intersect(q_dict, x), axis=1, raw=True)
+    dfTrain['sentence_intersect_ratio_of_question1_question2_div_sum'] = dfTrain.apply(lambda x: x['sentence_intersect_of_question1_question2'] / x['sentence_sum_of_question1_question2'], axis=1, raw=True)
+
+    print('test intersect...')
+    dfTest['sentence_intersect_of_question1_question2'] = dfTest.apply(lambda x: q1_q2_intersect(q_dict, x), axis=1, raw=True)
+    dfTest['sentence_intersect_ratio_of_question1_question2_div_sum'] = dfTest.apply(lambda x: x['sentence_intersect_of_question1_question2'] / x['sentence_sum_of_question1_question2'], axis=1, raw=True)
+
+
 
     return dfTrain, dfTest
 
@@ -131,11 +169,7 @@ if __name__ == "__main__":
     print("Generate freq and hash features...")
 
     dfTrain, dfTest = extract_feat(dfTrain, dfTest)
-    feat_names = [
-        name for name in dfTrain.columns \
-        if "hash" in name \
-        or "freq" in name
-        ]
+    feat_names = [name for name in dfTrain.columns if "sentence" in name]
 
     print("For cross-validation...")
     for run in range(config.n_runs):

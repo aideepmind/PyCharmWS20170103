@@ -8,13 +8,15 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 # Input data files are available in the "../input/" directory.
 # For example, running this (by clicking run or pressing Shift+Enter) will list the files in the input directory
 
-from subprocess import check_output
-print(check_output(["ls", "../input"]).decode("utf8"))
+# from subprocess import check_output
+# print(check_output(["ls", "../input"]).decode("utf8"))
 
 # Any results you write to the current directory are saved as output.
 
 import gensim
-model = gensim.models.KeyedVectors.load_word2vec_format('E:/安装软件/Python相关/GoogleNews-vectors-negative300.bin.gz',
+from sqlalchemy.sql.functions import sysdate
+
+model = gensim.models.KeyedVectors.load_word2vec_format('E:\安装软件\Python相关/GoogleNews-vectors-negative300.bin',
                                                         binary=True)
 
 words = model.index2word
@@ -63,13 +65,16 @@ def edits2(word):
     # "All edits that are two edits away from `word`."
     return (e2 for e1 in edits1(word) for e2 in edits1(e1))
 
-df_train = pd.read_csv('kaggle/Quora_Question_Pairs/Data/train.csv')
-df_test = pd.read_csv('kaggle/Quora_Question_Pairs/Data/test.csv')
+df_train = pd.read_csv('E:/PyCharmWS20170103/kaggle/Quora_Question_Pairs/Data/train.csv')
+# df_test = pd.read_csv('E:\\PyCharmWS20170103、kaggle/Quora_Question_Pairs/Data/test.csv')
 
 def preprocess_data(line):
     question1_words = str(line).lower().split()
     question1_words = [correction(w) for w in question1_words]
     return " ".join(question1_words)
 
+print("df_train question1 preprocess_data start...")
 df_train['question1'] = df_train['question1'].apply(preprocess_data)
+print("df_train question2 preprocess_data start...")
 df_train['question2'].apply(preprocess_data)
+df_train.to_csv('E:\PyCharmWS20170103\kaggle\Quora_Question_Pairs/temp/train.csv', index=False, encoding='utf-8')

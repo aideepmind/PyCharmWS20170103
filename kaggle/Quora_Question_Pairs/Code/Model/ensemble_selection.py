@@ -80,7 +80,7 @@ def ensembleSelection(feat_folder, model_folder, model_list, cdf, cdf_test, subm
                   bagging_replacement=False, bagging_fraction=0.5, bagging_size=10, init_top_k=5, prunning_fraction=0.2):
     ## load all the prediction
     maxNumValid = 12000
-    pred_list_valid = np.zeros((len(model_list), config.n_runs, config.n_folds, maxNumValid), dtype=float)
+    pred_list_valid = np.zeros((len(model_list), config.n_runs, config.n_folds, maxNumValid), dtype=float)  # 一共四维
     Y_list_valid = np.zeros((config.n_runs, config.n_folds, maxNumValid), dtype=float)
     cdf_list_valid = np.zeros((config.n_runs, config.n_folds, config.n_classes), dtype=float)
     numValidMatrix = np.zeros((config.n_runs, config.n_folds), dtype=int)
@@ -107,15 +107,15 @@ def ensembleSelection(feat_folder, model_folder, model_list, cdf, cdf_test, subm
                 pred_file = "%s/valid.pred.%s.csv" % (path, model)
                 cdf_file = "%s/Run%d/Fold%d/valid.cdf" % (feat_folder, run+1, fold+1)
                 this_p_valid = pd.read_csv(pred_file, dtype=float)
-                numValidMatrix[run][fold] = this_p_valid.shape[0]           
-                pred_list_valid[model_id,run,fold,:numValidMatrix[run][fold]] = this_p_valid["prediction"].values
-                Y_list_valid[run,fold,:numValidMatrix[run][fold]] = this_p_valid["target"].values
+                numValidMatrix[run][fold] = this_p_valid.shape[0]
+                pred_list_valid[model_id,run,fold,:numValidMatrix[run][fold]] = this_p_valid["prediction"].values   # 存预测值
+                Y_list_valid[run,fold,:numValidMatrix[run][fold]] = this_p_valid["target"].values   # 存目标值
                 ## load cdf
                 if cdf == None:
                     cdf_list_valid[run,fold, :] = np.loadtxt(cdf_file, dtype=float)
                 else:
                     cdf_list_valid[run,fold, :] = cdf
-                ##
+                ## 计算kappa
                 score = getScore(pred_list_valid[model_id,run,fold,:numValidMatrix[run][fold]], cdf_list_valid[run,fold, :])
                 kappa_cv[run][fold] = quadratic_weighted_kappa(score, Y_list_valid[run,fold,:numValidMatrix[run][fold]])     
 

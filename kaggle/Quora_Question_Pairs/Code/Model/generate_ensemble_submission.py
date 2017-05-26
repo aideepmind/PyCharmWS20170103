@@ -48,7 +48,7 @@ cdf_valid = None
 ## reg
 model_list = []
 # try 5/10/50
-id_sizes = 10*np.ones(len(feat_names), dtype=int)
+id_sizes = 10*np.ones(len(feat_names), dtype=int)   # 取出每个feat_name排名前10的预测值作为训练数据
 for feat_name,id_size in zip(feat_names, id_sizes):
     ## get the top 10 model ids
     log_file = "%s/Log/%s_hyperopt.log" % (model_folder, feat_name)

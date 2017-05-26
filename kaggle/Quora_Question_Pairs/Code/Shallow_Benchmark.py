@@ -120,23 +120,81 @@ sortedCoeffients = np.sort(logisticRegressor.coef_)[0]
 featureNames = BagOfWordsExtractor.get_feature_names()
 sortedFeatureNames = [featureNames[x] for x in list(np.argsort(logisticRegressor.coef_)[0])]
 
+# matplotlib.rcParams['font.size'] = 14
+# matplotlib.rcParams['figure.figsize'] = (10,12)
+#
+# plt.figure()
+# plt.suptitle('Feature Importance',fontsize=24)
+# ax = plt.subplot(1,2,1)
+# plt.title('top non duplicate predictors')
+# plt.xlabel('minus logistic regression coefficient')
+# ax.barh(range(numFeaturesToShow), -sortedCoeffients[:numFeaturesToShow][::-1], align='center')
+# plt.ylim(-1,numFeaturesToShow)
+# ax.set_yticks(range(numFeaturesToShow))
+# ax.set_yticklabels(sortedFeatureNames[:numFeaturesToShow][::-1],fontsize=20)
+#
+# ax = plt.subplot(1,2,2)
+# plt.title('top duplicate predictors')
+# plt.xlabel('logistic regression coefficient')
+# ax.barh(range(numFeaturesToShow), sortedCoeffients[-numFeaturesToShow:], align='center')
+# plt.ylim(-1,numFeaturesToShow)
+# ax.set_yticks(range(numFeaturesToShow))
+# ax.set_yticklabels(sortedFeatureNames[-numFeaturesToShow:],fontsize=20)
+
+#%% train on full training data
+
+trainingStartTime = time.time()
+
+logisticRegressor = linear_model.LogisticRegression(C=0.1, solver='sag',
+                                                    class_weight={1: 0.46, 0: 1.32})
+logisticRegressor.fit(X, y)
+
+trainingDurationInMinutes = (time.time()-trainingStartTime)/60.0
+print('full training took %.2f minutes' % (trainingDurationInMinutes))
+
+#%% load test data, extract features and make predictions
+
+testPredictionStartTime = time.time()
+
+testDF = pd.read_csv('kaggle/Quora_Question_Pairs/Data/test.csv')
+testDF.ix[testDF['question1'].isnull(),['question1','question2']] = 'random empty question'
+testDF.ix[testDF['question2'].isnull(),['question1','question2']] = 'random empty question'
+
+testQuestion1_BOW_rep = BagOfWordsExtractor.transform(testDF.ix[:,'question1'])
+testQuestion2_BOW_rep = BagOfWordsExtractor.transform(testDF.ix[:,'question2'])
+
+X_test = -(testQuestion1_BOW_rep != testQuestion2_BOW_rep).astype(int)
+#X_test = -(testQuestion1_BOW_rep != testQuestion2_BOW_rep).astype(int) + \
+#           testQuestion1_BOW_rep.multiply(testQuestion2_BOW_rep)
+
+#testPredictions = logisticRegressor.predict_proba(X_test)[:,1]
+
+# quick fix to avoid memory errors
+seperators= [750000,1500000]
+testPredictions1 = logisticRegressor.predict_proba(X_test[:seperators[0],:])[:,1]
+testPredictions2 = logisticRegressor.predict_proba(X_test[seperators[0]:seperators[1],:])[:,1]
+testPredictions3 = logisticRegressor.predict_proba(X_test[seperators[1]:,:])[:,1]
+testPredictions = np.hstack((testPredictions1,testPredictions2,testPredictions3))
+
 matplotlib.rcParams['font.size'] = 14
-matplotlib.rcParams['figure.figsize'] = (10,12)
+matplotlib.rcParams['figure.figsize'] = (9,9)
 
-plt.figure()
-plt.suptitle('Feature Importance',fontsize=24)
-ax = plt.subplot(1,2,1)
-plt.title('top non duplicate predictors')
-plt.xlabel('minus logistic regression coefficient')
-ax.barh(range(numFeaturesToShow), -sortedCoeffients[:numFeaturesToShow][::-1], align='center')
-plt.ylim(-1,numFeaturesToShow)
-ax.set_yticks(range(numFeaturesToShow))
-ax.set_yticklabels(sortedFeatureNames[:numFeaturesToShow][::-1],fontsize=20)
+plt.figure();
+plt.subplot(2,1,1); sns.kdeplot(y_valid_hat, shade=True, color="b", bw=0.01);
+plt.ylabel('Probability Density'); plt.xlim(-0.01,1.01)
+plt.title('mean valid prediction = ' + str(np.mean(y_valid_hat)))
+plt.subplot(2,1,2); sns.kdeplot(testPredictions, shade=True, color="b", bw=0.01);
+plt.xlabel('Prediction'); plt.ylabel('Probability Density'); plt.xlim(-0.01,1.01)
+plt.title('mean test prediction = ' + str(np.mean(testPredictions)))
 
-ax = plt.subplot(1,2,2)
-plt.title('top duplicate predictors')
-plt.xlabel('logistic regression coefficient')
-ax.barh(range(numFeaturesToShow), sortedCoeffients[-numFeaturesToShow:], align='center')
-plt.ylim(-1,numFeaturesToShow)
-ax.set_yticks(range(numFeaturesToShow))
-ax.set_yticklabels(sortedFeatureNames[-numFeaturesToShow:],fontsize=20)
+testPredictionDurationInMinutes = (time.time()-testPredictionStartTime)/60.0
+print('predicting on test took %.2f minutes' % (testPredictionDurationInMinutes))
+
+#%% create a submission
+
+submissionName = 'shallowBenchmark'
+
+submission = pd.DataFrame()
+submission['test_id'] = testDF['test_id']
+submission['is_duplicate'] = testPredictions
+submission.to_csv(submissionName + '.csv', index=False)
