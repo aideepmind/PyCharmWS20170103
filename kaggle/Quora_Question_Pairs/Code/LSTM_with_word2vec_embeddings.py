@@ -225,7 +225,7 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
-merged = concatenate([x1, y1])
+merged = np.concatenate([x1, y1])
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
 
