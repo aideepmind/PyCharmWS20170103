@@ -35,15 +35,14 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 import sys
 # reload(sys)
-sys.setdefaultencoding('utf-8')
+# sys.setdefaultencoding('utf-8')
 
 ########################################
 ## set directories and parameters
 ########################################
-BASE_DIR = '../input/'
-EMBEDDING_FILE = BASE_DIR + 'GoogleNews-vectors-negative300.bin'
-TRAIN_DATA_FILE = BASE_DIR + 'train.csv'
-TEST_DATA_FILE = BASE_DIR + 'test.csv'
+EMBEDDING_FILE = 'E:/安装软件/Python相关/GoogleNews-vectors-negative300.bin'
+TRAIN_DATA_FILE = 'kaggle/Quora_Question_Pairs/Data/train.csv'
+TEST_DATA_FILE = 'kaggle/Quora_Question_Pairs/Data/test.csv'
 MAX_SEQUENCE_LENGTH = 30
 MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
@@ -275,4 +274,4 @@ preds += model.predict([test_data_2, test_data_1], batch_size=8192, verbose=1)
 preds /= 2
 
 submission = pd.DataFrame({'test_id':test_ids, 'is_duplicate':preds.ravel()})
-submission.to_csv('%.4f_'%(bst_val_score)+STAMP+'.csv', index=False)
+submission.to_csv('kaggle/Quora_Question_Pairs/temp/%.4f_'%(bst_val_score)+STAMP+'.csv', index=False)
