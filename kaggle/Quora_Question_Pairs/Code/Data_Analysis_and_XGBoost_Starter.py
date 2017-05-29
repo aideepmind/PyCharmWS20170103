@@ -337,64 +337,64 @@ tfidf_train_word_match = df_train.apply(tfidf_word_match_share, axis=1, raw=True
 # print('   TFIDF AUC:', roc_auc_score(df_train['is_duplicate'], tfidf_train_word_match.fillna(0)))
 
 
-from sklearn.metrics.pairwise import cosine_similarity as cs
-from sklearn.metrics.pairwise import manhattan_distances as md
-from sklearn.metrics.pairwise import euclidean_distances as ed
-from sklearn.metrics import jaccard_similarity_score as jsc
-from sklearn.neighbors import DistanceMetric
-from sklearn.preprocessing import MinMaxScaler
-
-minkowski_dis = DistanceMetric.get_metric('minkowski')
-mms_scale_man = MinMaxScaler()
-mms_scale_euc = MinMaxScaler()
-mms_scale_mink = MinMaxScaler()
-
-def get_similarity_values(q1_csc, q2_csc):
-    cosine_sim = []
-    manhattan_dis = []
-    eucledian_dis = []
-    jaccard_dis = []
-    minkowsk_dis = []
-
-    for i, j in zip(q1_csc, q2_csc):
-        sim = cs(i, j)
-        cosine_sim.append(sim[0][0])
-        sim = md(i, j)
-        manhattan_dis.append(sim[0][0])
-        sim = ed(i, j)
-        eucledian_dis.append(sim[0][0])
-        i_ = i.toarray()
-        j_ = j.toarray()
-        try:
-            sim = jsc(i_, j_)
-            jaccard_dis.append(sim)
-        except:
-            jaccard_dis.append(0)
-
-        sim = minkowski_dis.pairwise(i_, j_)
-        minkowsk_dis.append(sim[0][0])
-
-    return cosine_sim, manhattan_dis, eucledian_dis, jaccard_dis, minkowsk_dis
-
-
-cosine_sim, manhattan_dis, eucledian_dis, jaccard_dis, minkowsk_dis = get_similarity_values(q1_csc, q2_csc)
-print("cosine_sim sample= \n", cosine_sim[0:2])
-print("manhattan_dis sample = \n", manhattan_dis[0:2])
-print("eucledian_dis sample = \n", eucledian_dis[0:2])
-print("jaccard_dis sample = \n", jaccard_dis[0:2])
-print("minkowsk_dis sample = \n", minkowsk_dis[0:2])
-
-eucledian_dis_array = np.array(eucledian_dis).reshape(-1, 1)
-manhattan_dis_array = np.array(manhattan_dis).reshape(-1, 1)
-minkowsk_dis_array = np.array(minkowsk_dis).reshape(-1, 1)
-
-manhattan_dis_array = mms_scale_man.fit_transform(manhattan_dis_array)
-eucledian_dis_array = mms_scale_euc.fit_transform(eucledian_dis_array)
-minkowsk_dis_array = mms_scale_mink.fit_transform(minkowsk_dis_array)
-
-eucledian_dis = eucledian_dis_array.flatten()
-manhattan_dis = manhattan_dis_array.flatten()
-minkowsk_dis = minkowsk_dis_array.flatten()
+# from sklearn.metrics.pairwise import cosine_similarity as cs
+# from sklearn.metrics.pairwise import manhattan_distances as md
+# from sklearn.metrics.pairwise import euclidean_distances as ed
+# from sklearn.metrics import jaccard_similarity_score as jsc
+# from sklearn.neighbors import DistanceMetric
+# from sklearn.preprocessing import MinMaxScaler
+#
+# minkowski_dis = DistanceMetric.get_metric('minkowski')
+# mms_scale_man = MinMaxScaler()
+# mms_scale_euc = MinMaxScaler()
+# mms_scale_mink = MinMaxScaler()
+#
+# def get_similarity_values(q1_csc, q2_csc):
+#     cosine_sim = []
+#     manhattan_dis = []
+#     eucledian_dis = []
+#     jaccard_dis = []
+#     minkowsk_dis = []
+#
+#     for i, j in zip(q1_csc, q2_csc):
+#         sim = cs(i, j)
+#         cosine_sim.append(sim[0][0])
+#         sim = md(i, j)
+#         manhattan_dis.append(sim[0][0])
+#         sim = ed(i, j)
+#         eucledian_dis.append(sim[0][0])
+#         i_ = i.toarray()
+#         j_ = j.toarray()
+#         try:
+#             sim = jsc(i_, j_)
+#             jaccard_dis.append(sim)
+#         except:
+#             jaccard_dis.append(0)
+#
+#         sim = minkowski_dis.pairwise(i_, j_)
+#         minkowsk_dis.append(sim[0][0])
+#
+#     return cosine_sim, manhattan_dis, eucledian_dis, jaccard_dis, minkowsk_dis
+#
+#
+# cosine_sim, manhattan_dis, eucledian_dis, jaccard_dis, minkowsk_dis = get_similarity_values(q1_csc, q2_csc)
+# print("cosine_sim sample= \n", cosine_sim[0:2])
+# print("manhattan_dis sample = \n", manhattan_dis[0:2])
+# print("eucledian_dis sample = \n", eucledian_dis[0:2])
+# print("jaccard_dis sample = \n", jaccard_dis[0:2])
+# print("minkowsk_dis sample = \n", minkowsk_dis[0:2])
+#
+# eucledian_dis_array = np.array(eucledian_dis).reshape(-1, 1)
+# manhattan_dis_array = np.array(manhattan_dis).reshape(-1, 1)
+# minkowsk_dis_array = np.array(minkowsk_dis).reshape(-1, 1)
+#
+# manhattan_dis_array = mms_scale_man.fit_transform(manhattan_dis_array)
+# eucledian_dis_array = mms_scale_euc.fit_transform(eucledian_dis_array)
+# minkowsk_dis_array = mms_scale_mink.fit_transform(minkowsk_dis_array)
+#
+# eucledian_dis = eucledian_dis_array.flatten()
+# manhattan_dis = manhattan_dis_array.flatten()
+# minkowsk_dis = minkowsk_dis_array.flatten()
 
 
 

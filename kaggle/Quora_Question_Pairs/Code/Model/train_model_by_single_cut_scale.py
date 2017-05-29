@@ -119,7 +119,7 @@ def hyperopt_wrapper(param, feat_folder, feat_name):
 
     return {'loss': log_loss_cv_mean, 'attachments': {'std': log_loss_cv_std}, 'status': STATUS_OK}
 
-runs = 2
+runs = 1
 n_splits = 2
 # generate kfold
 def gen_kfold_by_stratifiedKFold(train_data):
@@ -215,6 +215,8 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
             #### all the path
             path = "%s/Run%d/Fold%d" % (feat_folder, run, fold)
             save_path = "%s/Run%d/Fold%d" % (output_path, run, fold)
+            if not os.path.exists(path):
+                os.makedirs(path)
             if not os.path.exists(save_path):
                 os.makedirs(save_path)
             # feat: combine feat file
@@ -339,14 +341,22 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
 
                 elif param['task'] == "clf_skl_lr":
                     ## classification with sklearn logistic regression
+                    print("clf_skl_lr train start...")
+                    train_start_time = time.time()
                     lr = LogisticRegression(penalty="l2", dual=True, tol=1e-5,
                                             C=param['C'], fit_intercept=True, intercept_scaling=1.0,
                                             class_weight='auto', random_state=param['random_state'])
                     lr.fit(X_train[index_base], labels_train[index_base])
-                    pred = lr.predict_proba(X_valid)
-                    w = np.asarray(range(1, numValid))
-                    pred = pred * w[np.newaxis, :]
-                    pred = np.sum(pred, axis=1)
+                    train_duration_time = (time.time() - train_start_time) / 60.0
+                    print('predicting on test took %.2f minutes' % (train_duration_time))
+                    print("done...")
+                    print("clf_skl_lr predict start...")
+                    pred = lr.predict_proba(X_valid)[:, 1]
+                    print(pred)
+                    # w = np.asarray(range(1, numValid))
+                    # pred = pred * w[np.newaxis, :]
+                    # pred = np.sum(pred, axis=1)
+                    print("done...")
 
                 elif param['task'] == "reg_skl_svr":
                     ## regression with sklearn support vector regression
@@ -374,8 +384,8 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
                 elif param['task'] == 'reg_libfm':
                     ## regression with factorization machine (libfm)
                     ## to array
-                    X_train = X_train.toarray()
-                    X_valid = X_valid.toarray()
+                    # X_train = X_train.toarray()
+                    # X_valid = X_valid.toarray()
 
                     ## scale
                     scaler = StandardScaler()
@@ -383,21 +393,36 @@ def hyperopt_obj(param, feat_folder, feat_name, trial_counter):
                     X_valid = scaler.transform(X_valid)
 
                     ## dump feat
+                    print('dump feat for reg_libfm...')
                     dump_svmlight_file(X_train[index_base], labels_train[index_base], feat_train_path + ".tmp")
                     dump_svmlight_file(X_valid, labels_valid, feat_valid_path + ".tmp")
+                    print('done...')
 
+                    abs_fold = 'E:/PyCharmWS20170103/kaggle/Quora_Question_Pairs/'
+                    libfm_exe2 = libfm_exe.replace('../../', abs_fold)
+                    feat_train_path2 = feat_train_path.replace('../../', abs_fold)
+                    feat_valid_path2 = feat_valid_path.replace('../../', abs_fold)
+                    raw_pred_valid_path2 = raw_pred_valid_path.replace('../../', abs_fold)
                     ## train fm
+                    print('reg_libfm train start...')
                     cmd = "%s -task r -train %s -test %s -out %s -dim '1,1,%d' -iter %d > libfm.log" % ( \
-                        libfm_exe, feat_train_path + ".tmp", feat_valid_path + ".tmp", raw_pred_valid_path, \
+                        libfm_exe2, feat_train_path2 + ".tmp", feat_valid_path2 + ".tmp", raw_pred_valid_path2, \
                         param['dim'], param['iter'])
-                    os.system(cmd)
+                    print('cmd: ', cmd)
+                    output = os.popen(cmd)
+                    print(output.read())
                     os.remove(feat_train_path + ".tmp")
                     os.remove(feat_valid_path + ".tmp")
+                    print('done...')
 
                     ## extract libfm prediction
+                    print('reg_libfm predict start...')
                     pred = np.loadtxt(raw_pred_valid_path, dtype=float)
+                    pred[pred == 1] -= 1e-5
+                    pred[pred == 0] += 1e-5
+                    print('done...')
                     ## labels are in [0,1,2,3]
-                    pred += 1
+                    # pred += 1
 
                 # elif param['task'] == "reg_keras_dnn":
                 #     ## regression with keras' deep neural networks
@@ -905,7 +930,10 @@ def check_model(models, feat_name):
 if __name__ == "__main__":
     # 训练的模型需要传入说明，否则终止训练
     # specified_models = sys.argv[1:]
-    specified_models = ['bclf_xgb_tree']
+    # output = os.system("dir E:/PyCharmWS20170103/kaggle/Quora_Question_Pairs/Feat\solution\LSA_and_stats_feat_May22\Run1\Fold1")
+    # output = os.popen("../../libfm-1.40.windows/libfm.exe")
+    # print(os.system())
+    specified_models = ['clf_skl_lr']
     if len(specified_models) == 0:
         print("You have to specify which model to train.\n")
         print("Usage: python ./train_model_library_lsa.py model1 model2 model3 ...\n")  # cmd中启动命令

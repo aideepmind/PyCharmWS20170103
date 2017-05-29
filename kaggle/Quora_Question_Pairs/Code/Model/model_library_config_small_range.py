@@ -489,8 +489,8 @@ feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_reg_skl_lasso
 
 ## logistic regression
-feat_folder = "../../Feat/solution/LSA_and_stats_feat_Apr25"
-feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_Apr25]_[Model@clf_skl_lr]"
+feat_folder = "../../Feat/solution/LSA_and_stats_feat_May22"
+feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_May22]_[Model@clf_skl_lr]"
 feat_folders.append( feat_folder )
 feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_clf_skl_lr
@@ -498,8 +498,8 @@ param_spaces[feat_name] = param_space_clf_skl_lr
 ###########################
 ## Factorization Machine ##
 ###########################
-feat_folder = "../../Feat/solution/LSA_and_stats_feat_Apr25"
-feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_Apr25]_[Model@reg_libfm]"
+feat_folder = "../../Feat/solution/LSA_and_stats_feat_May22"
+feat_name = "[Pre@solution]_[Feat@LSA_and_stats_feat_May22]_[Model@reg_libfm]"
 feat_folders.append( feat_folder )
 feat_names.append( feat_name )
 param_spaces[feat_name] = param_space_reg_libfm

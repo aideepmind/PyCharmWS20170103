@@ -1,13 +1,9 @@
 '''
-Single model may achieve LB scores at around 0.29+ ~ 0.30+
-Average ensembles can easily get 0.28+ or less
-Don't need to be an expert of feature engineering
-All you need is a GPU!!!!!!!
+Example of an LSTM model with GloVe embeddings along with magic features
 
-The code is tested on Keras 2.0.0 using Tensorflow backend, and Python 2.7
+Tested under Keras 2.0 with Tensorflow 1.0 backend
 
-According to experiments by kagglers, Theano backend with GPU may give bad LB scores while
-        the val_loss seems to be fine, so try Tensorflow backend first please
+Single model may achieve LB scores at around 0.18+, average ensembles can get 0.17+
 '''
 
 ########################################
@@ -20,20 +16,21 @@ import codecs
 import numpy as np
 import pandas as pd
 
+from string import punctuation
+from collections import defaultdict
+
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
-from string import punctuation
 
-from gensim.models import KeyedVectors
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers import Dense, Input, LSTM, Embedding, Dropout, Activation
-# from keras.layers.merge import concatenate
+from keras.layers.merge import concatenate
 from keras.models import Model
 from keras.layers.normalization import BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras import backend as k
-from keras.layers.merge import concatenate
+
+from sklearn.preprocessing import StandardScaler
 
 import sys
 # reload(sys)
@@ -42,31 +39,24 @@ import sys
 ########################################
 ## set directories and parameters
 ########################################
-EMBEDDING_FILE = 'E:\安装软件\Python相关/GoogleNews-vectors-negative300.bin'
+EMBEDDING_FILE = 'E:\安装软件\Python相关/glove.840B.300d.txt'
 TRAIN_DATA_FILE = 'kaggle/Quora_Question_Pairs/Data/train.csv'
 TEST_DATA_FILE = 'kaggle/Quora_Question_Pairs/Data/test.csv'
-MAX_SEQUENCE_LENGTH = 30
-MAX_NB_WORDS = 200000
-EMBEDDING_DIM = 300
-VALIDATION_SPLIT = 0.1
+MAX_SEQUENCE_LENGTH = 30                            # 句子最大序列长度
+MAX_NB_WORDS = 200000                               # 最大NB单词数量，可能根据重要性（例如频率）保留符合的单词？
+EMBEDDING_DIM = 300                                 # 嵌入（词向量）维度
+VALIDATION_SPLIT = 0.1                              # 验证集（kfold）分割比例
 
-num_lstm = np.random.randint(175, 275)
-num_dense = np.random.randint(100, 150)
-rate_drop_lstm = 0.15 + np.random.rand() * 0.25
-rate_drop_dense = 0.15 + np.random.rand() * 0.25
+num_lstm = np.random.randint(175, 275)              # LSTM: long short term memory（时间递归神经网络）
+num_dense = np.random.randint(100, 150)             # 隐含层的数量？
+rate_drop_lstm = 0.15 + np.random.rand() * 0.25     #
+rate_drop_dense = 0.15 + np.random.rand() * 0.25    #
 
-act = 'relu'
+act = 'relu'    # ReLu(Rectified Linear Units)激活函数
 re_weight = True # whether to re-weight classes to fit the 17.5% share in test set
 
-STAMP = 'lstm_%d_%d_%.2f_%.2f'%(num_lstm, num_dense, rate_drop_lstm,  rate_drop_dense)
+STAMP = 'lstm_%d_%d_%.2f_%.2f'%(num_lstm, num_dense, rate_drop_lstm, rate_drop_dense)
 
-########################################
-## index word vectors
-########################################
-print('Indexing word vectors')
-
-word2vec = KeyedVectors.load_word2vec_format(EMBEDDING_FILE, binary=True)
-print('Found %s word vectors of word2vec' % len(word2vec.vocab))
 
 ########################################
 ## process texts in datasets
@@ -129,6 +119,7 @@ def text_to_wordlist(text, remove_stopwords=False, stem_words=False):
     # Return a list of words
     return(text)
 
+# load 训练数据并预处理
 texts_1 = [] 
 texts_2 = []
 labels = []
@@ -141,6 +132,7 @@ with codecs.open(TRAIN_DATA_FILE, encoding='utf-8') as f:
         labels.append(int(values[5]))
 print('Found %s texts in train.csv' % len(texts_1))
 
+# load 测试数据并预处理
 test_texts_1 = []
 test_texts_2 = []
 test_ids = []
@@ -153,7 +145,7 @@ with codecs.open(TEST_DATA_FILE, encoding='utf-8') as f:
         test_ids.append(values[0])
 print('Found %s texts in test.csv' % len(test_texts_1))
 
-tokenizer = Tokenizer(nb_words=MAX_NB_WORDS)
+tokenizer = Tokenizer(num_words=MAX_NB_WORDS)
 tokenizer.fit_on_texts(texts_1 + texts_2 + test_texts_1 + test_texts_2)
 
 sequences_1 = tokenizer.texts_to_sequences(texts_1)
@@ -175,6 +167,65 @@ test_data_2 = pad_sequences(test_sequences_2, maxlen=MAX_SEQUENCE_LENGTH)
 test_ids = np.array(test_ids)
 
 ########################################
+## generate leaky features
+########################################
+
+train_df = pd.read_csv(TRAIN_DATA_FILE)
+test_df = pd.read_csv(TEST_DATA_FILE)
+
+ques = pd.concat([train_df[['question1', 'question2']], \
+        test_df[['question1', 'question2']]], axis=0).reset_index(drop='index')
+q_dict = defaultdict(set)
+for i in range(ques.shape[0]):
+        q_dict[ques.question1[i]].add(ques.question2[i])
+        q_dict[ques.question2[i]].add(ques.question1[i])
+
+def q1_freq(row):
+    return(len(q_dict[row['question1']]))
+    
+def q2_freq(row):
+    return(len(q_dict[row['question2']]))
+    
+def q1_q2_intersect(row):
+    return(len(set(q_dict[row['question1']]).intersection(set(q_dict[row['question2']]))))
+
+train_df['q1_q2_intersect'] = train_df.apply(q1_q2_intersect, axis=1, raw=True)
+train_df['q1_freq'] = train_df.apply(q1_freq, axis=1, raw=True)
+train_df['q2_freq'] = train_df.apply(q2_freq, axis=1, raw=True)
+
+test_df['q1_q2_intersect'] = test_df.apply(q1_q2_intersect, axis=1, raw=True)
+test_df['q1_freq'] = test_df.apply(q1_freq, axis=1, raw=True)
+test_df['q2_freq'] = test_df.apply(q2_freq, axis=1, raw=True)
+
+leaks = train_df[['q1_q2_intersect', 'q1_freq', 'q2_freq']]
+test_leaks = test_df[['q1_q2_intersect', 'q1_freq', 'q2_freq']]
+
+# 标准化
+ss = StandardScaler()
+ss.fit(np.vstack((leaks, test_leaks)))
+leaks = ss.transform(leaks)
+test_leaks = ss.transform(test_leaks)
+
+
+########################################
+## index word vectors
+########################################
+print('Indexing word vectors')
+
+#  load 词向量
+embeddings_index = {}
+f = open(EMBEDDING_FILE, encoding="utf-8")
+count = 0
+for line in f:
+    values = line.split(' ')
+    word = values[0]
+    coefs = np.asarray(values[1:], dtype='float32')
+    embeddings_index[word] = coefs
+f.close()
+
+print('Found %d word vectors of glove.' % len(embeddings_index))
+
+########################################
 ## prepare embeddings
 ########################################
 print('Preparing embedding matrix')
@@ -183,8 +234,9 @@ nb_words = min(MAX_NB_WORDS, len(word_index))+1
 
 embedding_matrix = np.zeros((nb_words, EMBEDDING_DIM))
 for word, i in word_index.items():
-    if word in word2vec.vocab:
-        embedding_matrix[i] = word2vec.word_vec(word)
+    embedding_vector = embeddings_index.get(word)
+    if embedding_vector is not None:
+        embedding_matrix[i] = embedding_vector
 print('Null word embeddings: %d' % np.sum(np.sum(embedding_matrix, axis=1) == 0))
 
 ########################################
@@ -195,13 +247,14 @@ perm = np.random.permutation(len(data_1))
 idx_train = perm[:int(len(data_1)*(1-VALIDATION_SPLIT))]
 idx_val = perm[int(len(data_1)*(1-VALIDATION_SPLIT)):]
 
-
 data_1_train = np.vstack((data_1[idx_train], data_2[idx_train]))
 data_2_train = np.vstack((data_2[idx_train], data_1[idx_train]))
+leaks_train = np.vstack((leaks[idx_train], leaks[idx_train]))
 labels_train = np.concatenate((labels[idx_train], labels[idx_train]))
 
 data_1_val = np.vstack((data_1[idx_val], data_2[idx_val]))
 data_2_val = np.vstack((data_2[idx_val], data_1[idx_val]))
+leaks_val = np.vstack((leaks[idx_val], leaks[idx_val]))
 labels_val = np.concatenate((labels[idx_val], labels[idx_val]))
 
 weight_val = np.ones(len(labels_val))
@@ -227,14 +280,16 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
+leaks_input = Input(shape=(leaks.shape[1],))
+leaks_dense = Dense(int(num_dense/2), activation=act)(leaks_input)
 
-merged = concatenate([x1, y1])
-merged = Dropout(rate_drop_dense)(merged)
+merged = concatenate([x1, y1, leaks_dense])
 merged = BatchNormalization()(merged)
+merged = Dropout(rate_drop_dense)(merged)
 
 merged = Dense(num_dense, activation=act)(merged)
-merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
+merged = Dropout(rate_drop_dense)(merged)
 
 preds = Dense(1, activation='sigmoid')(merged)
 
@@ -249,7 +304,8 @@ else:
 ########################################
 ## train the model
 ########################################
-model = Model(inputs=[sequence_1_input, sequence_2_input],  outputs=preds)
+model = Model(inputs=[sequence_1_input, sequence_2_input, leaks_input], \
+        outputs=preds)
 model.compile(loss='binary_crossentropy',
         optimizer='nadam',
         metrics=['acc'])
@@ -260,9 +316,9 @@ early_stopping =EarlyStopping(monitor='val_loss', patience=3)
 bst_model_path = STAMP + '.h5'
 model_checkpoint = ModelCheckpoint(bst_model_path, save_best_only=True, save_weights_only=True)
 
-hist = model.fit([data_1_train, data_2_train], labels_train,
-        validation_data=([data_1_val, data_2_val], labels_val, weight_val),
-        epochs=1, batch_size=2048, shuffle=True,
+hist = model.fit([data_1_train, data_2_train, leaks_train], labels_train, \
+        validation_data=([data_1_val, data_2_val, leaks_val], labels_val, weight_val), \
+        epochs=200, batch_size=2048, shuffle=True, \
         class_weight=class_weight, callbacks=[early_stopping, model_checkpoint])
 
 model.load_weights(bst_model_path)
@@ -273,9 +329,9 @@ bst_val_score = min(hist.history['val_loss'])
 ########################################
 print('Start making the submission before fine-tuning')
 
-preds = model.predict([test_data_1, test_data_2], batch_size=8192, verbose=1)
-preds += model.predict([test_data_2, test_data_1], batch_size=8192, verbose=1)
+preds = model.predict([test_data_1, test_data_2, test_leaks], batch_size=8192, verbose=1)
+preds += model.predict([test_data_2, test_data_1, test_leaks], batch_size=8192, verbose=1)
 preds /= 2
 
 submission = pd.DataFrame({'test_id':test_ids, 'is_duplicate':preds.ravel()})
-# submission.to_csv('%.4f_'%(bst_val_score)+STAMP+'.csv', index=False)
+submission.to_csv('kaggle/Quora_Question_Pairs/temp/%.4f_'%(bst_val_score)+STAMP+'.csv', index=False)
