@@ -10,7 +10,7 @@ import numpy as np
 import gensim
 from fuzzywuzzy import fuzz
 from nltk.corpus import stopwords
-from tqdm import tqdm
+from tqdm import tqdm   # 进度条
 from scipy.stats import skew, kurtosis
 from scipy.spatial.distance import cosine, cityblock, jaccard, canberra, euclidean, minkowski, braycurtis
 from nltk import word_tokenize

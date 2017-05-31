@@ -933,7 +933,7 @@ if __name__ == "__main__":
     # output = os.system("dir E:/PyCharmWS20170103/kaggle/Quora_Question_Pairs/Feat\solution\LSA_and_stats_feat_May22\Run1\Fold1")
     # output = os.popen("../../libfm-1.40.windows/libfm.exe")
     # print(os.system())
-    specified_models = ['clf_skl_lr']
+    specified_models = ['bclf_xgb_tree']
     if len(specified_models) == 0:
         print("You have to specify which model to train.\n")
         print("Usage: python ./train_model_library_lsa.py model1 model2 model3 ...\n")  # cmd中启动命令
