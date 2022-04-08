@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-04-08T12:56:23.976Z" agent="5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" etag="PyqLgEF_lKUBWnOLLh_G" version="17.4.0" type="github">
+<mxfile host="app.diagrams.net" modified="2022-04-08T12:57:15.637Z" agent="5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" etag="nwLkpjYNfvWOMP6nbX7D" version="17.4.0" type="github">
   <diagram id="yX4JlD2XJ49cNifu15De" name="Page-1">
     <mxGraphModel dx="1002" dy="685" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -18,6 +18,9 @@
         </mxCell>
         <mxCell id="sOjoA4uLG9KZKxS9Kc0K-5" value="技术栈&amp;amp;精通Redis or ES" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="370" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-6" value="架构知识&amp;amp;课程" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="370" y="400" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
