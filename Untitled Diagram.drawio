@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-04-08T13:03:23.833Z" agent="5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" etag="JDuW_YQHjn2wpykgBmh_" version="17.4.0" type="github">
+<mxfile host="app.diagrams.net" modified="2022-04-09T02:37:32.236Z" agent="5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" etag="4tW2j-4PrAWxaCRnKx0p" version="17.4.0" type="github">
   <diagram id="yX4JlD2XJ49cNifu15De" name="Page-1">
     <mxGraphModel dx="1002" dy="685" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -24,6 +24,9 @@
         </mxCell>
         <mxCell id="sOjoA4uLG9KZKxS9Kc0K-7" value="使用场景" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="620" y="280" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-9" value="我只是一个普通人，坚决不能好高骛远，定位好自己，只做能力范围内的事情" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="370" y="40" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
