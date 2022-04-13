@@ -1,31 +1,31 @@
-<mxfile host="app.diagrams.net" modified="2022-04-09T03:08:39.336Z" agent="5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" etag="scNSR0_jdgNHQQvODebg" version="17.4.0" type="github">
+<mxfile host="app.diagrams.net" modified="2022-04-13T11:02:34.132Z" agent="5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" etag="h156yvCex9yXHiAQ_z7Z" version="17.4.0" type="github">
   <diagram id="yX4JlD2XJ49cNifu15De" name="Page-1">
     <mxGraphModel dx="1002" dy="685" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-1" value="性能测试知道极限&amp;amp;度在哪里" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-1" value="性能测试知道极限&amp;amp;度在哪里" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="120" y="390" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-2" value="写作能力" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-2" value="写作能力" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
           <mxGeometry x="120" y="510" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-3" value="计算机底层&amp;amp;数据结构与算法" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-3" value="计算机底层&amp;amp;数据结构与算法" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="120" y="630" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-4" value="架构师&amp;amp;技术经理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-4" value="架构师&amp;amp;技术经理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
           <mxGeometry x="370" y="510" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-5" value="技术栈&amp;amp;精通Redis or ES" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-5" value="技术栈&amp;amp;精通Redis or ES" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="370" y="390" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-6" value="架构知识&amp;amp;课程" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-6" value="架构知识&amp;amp;课程" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="370" y="630" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-7" value="使用场景" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-7" value="使用场景" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="620" y="510" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-9" value="我只是一个普通人，坚决不好高骛远，定位好自己，只做能力范围内的事情" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+        <mxCell id="sOjoA4uLG9KZKxS9Kc0K-9" value="我只是一个普通人，坚决不好高骛远，定位好自己，只做能力范围内的事情" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#FF3333;" parent="1" vertex="1">
           <mxGeometry x="370" y="270" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
